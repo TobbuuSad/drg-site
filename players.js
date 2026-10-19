@@ -136,6 +136,12 @@ window.PLAYERS = [
     "position": "Паладин",
     "discord": "diman058422",
     "head": ""
+  },
+  {
+    "nick": "egrytygh",
+    "position": "Лайтовец",
+    "discord": "egrytygh",
+    "head": ""
   }
 ]
 ;
