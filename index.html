@@ -47,8 +47,8 @@
     animation:sheen 2.6s linear infinite;
   }
   @keyframes sheen{
-    0%{background-position:0% 0%}
-    100%{background-position:200% 0%}
+    0%{background-position:100% 0%}
+    100%{background-position:0% 0%}
   }
   .sheenPill{
     background-size:200% 100%;
@@ -397,7 +397,9 @@
   function roleGradient(pos){
     var arr = ROLE_COLORS[String(pos || "").trim().toLowerCase()];
     if(!arr){ return null; }
-    return "linear-gradient(90deg, " + arr[0] + ", " + arr[1] + ", " + arr[0] + ")";
+    // волна: 2 полных периода на ширину текста — фон движется слева направо
+    return "linear-gradient(90deg, " + arr[0] + " 0%, " + arr[1] + " 25%, " + arr[0] + " 50%, " +
+      arr[1] + " 75%, " + arr[0] + " 100%)";
   }
   function roleColor2(pos){
     var arr = ROLE_COLORS[String(pos || "").trim().toLowerCase()];
