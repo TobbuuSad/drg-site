@@ -82,6 +82,13 @@
       <button id="btnAdd">Добавить</button>
       <button id="btnSavePos" class="ghost" title="Запомнить должность из поля выше, чтобы потом выбирать её одним кликом">💾 Сохранить должность</button>
     </div>
+    <div class="row" style="margin-top:10px; align-items:flex-end">
+      <div class="field" style="flex:1 1 auto; min-width:280px">
+        <label>Массовое добавление — по игроку на строку: <b>Ник; Должность; Дискорд</b></label>
+        <textarea id="fBulk" rows="5" style="width:100%; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); border-radius:8px; color:inherit; padding:8px; font:inherit" placeholder="Steve; Паладин; steve_drg&#10;Alex; Страж&#10;Nika"></textarea>
+      </div>
+      <button id="btnBulkAdd">➕ Добавить пачкой</button>
+    </div>
     <div class="row" id="posRow" style="margin-top:10px; display:none">
       <span class="badge" style="background:rgba(255,255,255,.06)">💾 Сохранённые должности (клик — подставить):</span>
       <span id="posChips" style="display:flex; gap:6px; flex-wrap:wrap"></span>
@@ -601,6 +608,38 @@
     document.getElementById("fPos").value = "";
     document.getElementById("fDisc").value = "";
     persist();
+  });
+
+  // ---------- массовое добавление ----------
+  document.getElementById("btnBulkAdd").addEventListener("click", function(){
+    if(!access){ alert("Доступ закрыт — войдите по логину и паролю в разделе «Доступ к сайту»"); return; }
+    var raw = document.getElementById("fBulk").value;
+    var lines = raw.split(/\r?\n/);
+    var added = 0, skipped = 0, seen = {};
+    players.forEach(function(p){ seen[nickKey(p)] = true; });
+    var addedNicks = [];
+    lines.forEach(function(line){
+      line = line.trim();
+      if(!line) return;
+      var parts = line.split(/[;,\t]+/).map(function(s){ return s.trim(); });
+      var nick = clean(parts[0] || "");
+      if(!nick){ return; }
+      if(seen[nick.toLowerCase()]){ skipped++; return; }
+      seen[nick.toLowerCase()] = true;
+      var pos = clean(parts[1] || "");
+      var dsc = clean(parts[2] || "");
+      players.push({ nick: nick, position: pos, discord: dsc });
+      rememberPosition(pos);
+      added++;
+      addedNicks.push(nick);
+    });
+    if(!added){
+      alert("Никого не добавлено: пусто, битые строки или игроки уже есть в списке" + (skipped ? " (дублей: " + skipped + ")" : ""));
+      return;
+    }
+    document.getElementById("fBulk").value = "";
+    persist();
+    setSyncStatus("Массовое добавление: +" + added + " игрок(ов)" + (skipped ? ", пропущено дублей: " + skipped : "") + ", " + now());
   });
 
   // ---------- Сохранённые должности ----------
