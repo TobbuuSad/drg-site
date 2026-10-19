@@ -68,6 +68,12 @@
     </div>
   </div>
 
+  <!-- вкладки разделов -->
+  <div id="tabs" style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap">
+    <button id="tabTableBtn" class="ghost" style="opacity:.55">📋 Таблица состава</button>
+    <button id="tabClanBtn" class="ghost" style="opacity:.55">🐉 Должности клана</button>
+  </div>
+
   <div class="card" id="editorCard">
     <div class="row">
       <div class="field"><label>Ник в игре</label><input id="fNick" placeholder="Steve"></div>
@@ -93,6 +99,28 @@
       <thead><tr><th style="width:28%">Ник</th><th style="width:30%">Должность</th><th style="width:28%">Дискорд</th><th class="actions">Действия</th></tr></thead>
       <tbody id="tbody"></tbody>
     </table>
+  </div>
+
+  <!-- всплывающее окно редактирования игрока -->
+  <div id="editBackdrop" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:60">
+    <div style="position:absolute; left:50%; top:90px; transform:translateX(-50%); background:#171a20; border:1px solid rgba(255,255,255,.14); border-radius:14px; padding:18px; width:min(430px,94vw)">
+      <h3 style="margin:0 0 12px; font-size:16px">✏️ Изменить игрока</h3>
+      <div class="field" style="margin-bottom:8px"><label>Ник</label><input id="eNick"></div>
+      <div class="field" style="margin-bottom:8px"><label>Должность (варианты ниже системных ролей и ваших сохранённых)</label><input id="ePos" list="posList"></div>
+      <div class="field" style="margin-bottom:6px"><label>Дискорд</label><input id="eDisc"></div>
+      <div class="field" style="margin-bottom:6px"><label>Голова (ник скина или ссылка на картинку)</label><input id="eHead" placeholder="пусто = голова по нику игрока"></div>
+      <div class="hint" style="font-size:11px; opacity:.55; margin:-2px 0 4px">Голову можно задать как ник любого скина (например <code>Steve</code>) или прямую ссылку на картинку. Показывается в «Должностях клана».</div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 4px" id="eRoles"></div>
+      <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px">
+        <button class="ghost" id="eCancel">Отмена</button>
+        <button id="eSave">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="clanCard">
+    <h3 style="margin:0 0 12px; font-size:16px">🐉 Состав клана</h3>
+    <div id="clanList"><span style="opacity:.6">Пока пусто — игроки появятся, когда в таблице будут должности из лестницы.</span></div>
   </div>
 
   <div class="card" id="toolsCard">
@@ -271,7 +299,8 @@
       return {
         nick: clean(String(p && (p.nick ?? p.name) || "")),
         position: clean(String(p && (p.position ?? p.role) || "")),
-        discord: clean(String(p && (p.discord ?? p.tag) || ""))
+        discord: clean(String(p && (p.discord ?? p.tag) || "")),
+        head: clean(String(p && (p.head ?? p.avatar) || ""))
       };
     }).filter(function(p){ return p.nick.trim() !== ""; });
   }
@@ -295,8 +324,105 @@
   function persist(){
     try{ localStorage.setItem(KEY, JSON.stringify(players, null, 2)); }catch(e){}
     render();
+    renderClan();
     schedulePublish();
   }
+
+  // ---------- вкладки ----------
+  function showTab(name){
+    var showTable = name === "table";
+    document.getElementById("editorCard").style.display = showTable ? "" : "none";
+    document.getElementById("toolsCard").style.display = showTable ? "" : "none";
+    document.getElementById("clanCard").style.display = showTable ? "none" : "";
+    document.getElementById("tabTableBtn").style.opacity = showTable ? "1" : ".55";
+    document.getElementById("tabClanBtn").style.opacity = showTable ? ".55" : "1";
+    document.getElementById("tabTableBtn").style.outline = showTable ? "2px solid rgba(0,163,188,.8)" : "none";
+    document.getElementById("tabClanBtn").style.outline = showTable ? "none" : "2px solid rgba(219,32,219,.8)";
+  }
+  document.getElementById("tabTableBtn").addEventListener("click", function(){ showTab("table"); });
+  document.getElementById("tabClanBtn").addEventListener("click", function(){ showTab("clan"); });
+  showTab("table");
+
+  // ---------- страницы клана / роли ----------
+  var RANKS = ["Хранитель", "Магистр", "Страж", "Паладин", "Рыцарь", "Лайтовец", "Клоун"];
+
+  function renderClan(){
+    var box = document.getElementById("clanList");
+    if(!box){ return; }
+    box.innerHTML = "";
+    var any = false;
+    RANKS.forEach(function(rank){
+      var members = players.filter(function(p){
+        if(p.nick === "TobbuuSad"){ return rank === "Клоун"; } // отдельная роль Клоун
+        return (p.position || "").trim().toLowerCase() === rank.toLowerCase();
+      });
+      if(!members.length){ return; }
+      any = true;
+      var block = document.createElement("div");
+      block.style.cssText = "margin-bottom:20px";
+      // заголовок роли — плашка с числом
+      var head = document.createElement("div");
+      head.style.cssText = "display:flex;align-items:center;gap:10px;margin-bottom:10px";
+      head.innerHTML =
+        '<span style="background:linear-gradient(90deg, rgba(219,32,219,.25), rgba(219,32,219,.08)); border:1px solid rgba(219,32,219,.5);' +
+        'color:#db20db; font-weight:700; padding:4px 12px; border-radius:999px; font-size:14px">' + esc(rank) + '</span>' +
+        '<span style="opacity:.55; font-size:12px">' + members.length + ' чел.</span>';
+      block.appendChild(head);
+      // сетка карточек в стиле holyworld staffs
+      var grid = document.createElement("div");
+      grid.style.cssText = "display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:10px";
+      members.forEach(function(m){
+        grid.appendChild(memberCard(m));
+      });
+      block.appendChild(grid);
+      box.appendChild(block);
+    });
+    if(!any){
+      box.innerHTML = '<span style="opacity:.6">Пока пусто — игроки появятся, когда в таблице будут должности из лестницы.</span>';
+    }
+  }
+
+  // ссылка на голову игрока: своя «бошка» (ник скина или URL) либо голова по нику
+  function headUrl(p){
+    var h = (p.head || "").trim();
+    if(/^https?:\/\//i.test(h)){ return h; }
+    var nick = h || p.nick;
+    return "https://minotar.net/helm/" + encodeURIComponent(nick) + "/64.png";
+  }
+
+  function memberCard(p){
+    var card = document.createElement("div");
+    card.className = "memberCard";
+    card.style.cssText =
+      "background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.09); border-radius:12px;" +
+      "padding:14px 8px; text-align:center; cursor:pointer; transition:transform .12s ease, background .12s ease, border-color .12s ease";
+    var inner = '<img src="' + headUrl(p).replace(/"/g, "%22") + '" alt="" loading="lazy"' +
+      ' style="width:56px; height:56px; image-rendering:pixelated; border-radius:8px; background:rgba(0,0,0,.35); box-shadow:0 2px 8px rgba(0,0,0,.4)">' +
+      '<div style="font-weight:700; margin-top:8px; font-size:13px; word-break:break-word; color:#eee">' + esc(p.nick) + '</div>';
+    if(p.discord){
+      inner += '<div style="opacity:.55; font-size:11px; margin-top:3px; word-break:break-word">' + esc(p.discord) + '</div>';
+    }
+    card.innerHTML = inner;
+    card.addEventListener("mouseenter", function(){
+      card.style.transform = "translateY(-3px)";
+      card.style.background = "rgba(219,32,219,.10)";
+      card.style.borderColor = "rgba(219,32,219,.55)";
+    });
+    card.addEventListener("mouseleave", function(){
+      card.style.transform = "";
+      card.style.background = "";
+      card.style.borderColor = "";
+    });
+    // клик по карточке — открыть редактирование (для тех, у кого есть доступ)
+    card.addEventListener("click", function(){
+      var i = players.indexOf(p);
+      if(i < 0){ return; }
+      if(!access){ alert("Изменение доступно только после входа по логину и паролю в разделе «Доступ к сайту»"); return; }
+      openEdit(i);
+    });
+    return card;
+  }
+
 
   // ---------- прямая публикация в GitHub ----------
   var OWNER = "TobbuuSad", REPO = "drg-site", BRANCH = "main";
@@ -498,7 +624,14 @@
   function fillPosDatalist(){
     var dl = document.getElementById("posList");
     dl.innerHTML = "";
-    savedPositions.forEach(function(p){
+    // сначала сохранённые пользователем, затем системные роли лестницы
+    var vals = [];
+    savedPositions.forEach(function(p){ vals.push(p); });
+    RANKS.forEach(function(r){
+      var known = vals.some(function(v){ return String(v).toLowerCase() === r.toLowerCase(); });
+      if(!known){ vals.push(r); }
+    });
+    vals.forEach(function(p){
       var o = document.createElement("option");
       o.value = p;
       dl.appendChild(o);
@@ -550,16 +683,62 @@
     var edit = e.target.getAttribute("data-edit");
     if(edit !== null){
       if(!access){ alert("Доступ закрыт — войдите по логину и паролю в разделе «Доступ к сайту»"); return; }
-      var p = players[Number(edit)];
-      var n = prompt("Ник:", p.nick); if(n === null) return;
-      var pos = prompt("Должность:", p.position); if(pos === null) return;
-      var dsc = prompt("Дискорд:", p.discord); if(dsc === null) return;
-      n = n.trim();
-      if(!n){ alert("Ник не может быть пустым"); return; }
-      players[Number(edit)] = { nick:n, position:pos.trim(), discord:dsc.trim() };
-      rememberPosition(pos);
-      persist();
+      openEdit(Number(edit));
     }
+  });
+
+  // ---------- модальное окно изменения игрока ----------
+  var editIndex = -1;
+
+  function roleChips(){
+    var box = document.getElementById("eRoles");
+    box.innerHTML = "";
+    RANKS.forEach(function(r){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "ghost";
+      b.textContent = r;
+      b.addEventListener("click", function(){ document.getElementById("ePos").value = r; });
+      box.appendChild(b);
+    });
+  }
+  roleChips();
+
+  function openEdit(i){
+    var p = players[i];
+    if(!p){ return; }
+    editIndex = i;
+    document.getElementById("eNick").value = p.nick;
+    document.getElementById("ePos").value = p.position || "";
+    document.getElementById("eDisc").value = p.discord || "";
+    document.getElementById("eHead").value = p.head || "";
+    document.getElementById("editBackdrop").style.display = "";
+    document.getElementById("eNick").focus();
+  }
+  function closeEdit(){
+    document.getElementById("editBackdrop").style.display = "none";
+    editIndex = -1;
+  }
+  document.getElementById("eCancel").addEventListener("click", closeEdit);
+  document.getElementById("editBackdrop").addEventListener("click", function(ev){
+    if(ev.target === this){ closeEdit(); }
+  });
+  document.getElementById("eSave").addEventListener("click", function(){
+    if(!access){ alert("Доступ закрыт — войдите по логину и паролю в разделе «Доступ к сайту»"); closeEdit(); return; }
+    var n = document.getElementById("eNick").value.trim();
+    var pos = document.getElementById("ePos").value.trim();
+    var dsc = document.getElementById("eDisc").value.trim();
+    var hd = document.getElementById("eHead").value.trim();
+    if(!n){ alert("Ник не может быть пустым"); return; }
+    players[editIndex] = { nick: n, position: pos, discord: dsc, head: hd };
+    rememberPosition(pos);
+    persist();
+    closeEdit();
+  });
+  document.addEventListener("keydown", function(ev){
+    if(editIndex < 0){ return; }
+    if(ev.key === "Escape"){ closeEdit(); }
+    if(ev.key === "Enter" && document.getElementById("editBackdrop").style.display !== "none"){ document.getElementById("eSave").click(); }
   });
 
   document.getElementById("btnRefresh").addEventListener("click", function(){
@@ -636,6 +815,7 @@
 
   render();
   renderPosChips();
+  renderClan();
 })();
 </script>
 </body>
