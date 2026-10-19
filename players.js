@@ -48,11 +48,6 @@ window.PLAYERS = [
     "nick": "1_InFeRnUs_1",
     "position": "Страж",
     "discord": ".yarlik"
-  },
-  {
-    "nick": "renal999",
-    "position": "Грифер",
-    "discord": "Вор в законе"
   }
 ]
 ;
