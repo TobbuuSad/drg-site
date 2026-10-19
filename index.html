@@ -73,6 +73,12 @@
 
   <div class="card">
     <div class="tools">
+      <button id="btnPublish" title="Записать players.json и players.js в репозиторий GitHub прямо сейчас">🚀 Опубликовать на GitHub</button>
+      <button id="btnAuto" class="ghost" title="Публиковать автоматически после правки списка">Автопубликация: ВКЛ</button>
+      <button id="btnToken" class="ghost" title="Личный токен GitHub (право Content: Read and write для этого репозитория)">🔑 Токен</button>
+      <span class="badge" id="pubStatus"></span>
+    </div>
+    <div class="tools">
       <button class="ghost" id="btnSaveJson">Сохранить players.json</button>
       <button class="ghost" id="btnSaveJs">Сохранить players.js</button>
       <button class="ghost" id="btnSaveBoth">Сохранить оба файла</button>
@@ -83,10 +89,11 @@
       <p><b>Как это работает с модом.</b> Мод раз в N минут (задаётся в <code>config/drg-nametags.json</code>,
       поле <code>refreshSeconds</code>) скачивает файл <code>players.json</code> по адресу из конфига
       (<code>siteUrl</code>) и помещает содержимое в свою локальную базу. Код мода при этом менять не нужно.</p>
-      <p><b>Как опубликовать изменения.</b> Отредактируйте таблицу выше, нажмите «Сохранить оба файла», затем положите файлы в
-      папку сайта и запустите <code>push.bat</code> (он сам возьмёт свежие файлы из «Загрузок», сделает commit
-      и отправит на GitHub). Либо правьте <code>players.json</code> прямо на странице репозитория GitHub
-      (карандаш рядом с файлом). Через 1–2 минуты сайт обновится автоматически.</p>
+      <p><b>Как опубликовать изменения.</b> Впиши токен один раз (🔑 Токен) — дальше всё автоматически:
+      правишь список (добавить/изменить/удалить) — через 5 секунд файлы уходят в GitHub сами, статус виден рядом с кнопкой.
+      Или нажми 🚀 сразу. Токен создать здесь: github.com/settings/personal-access-tokens/new (право Content: Read and write, только репозиторий drg-site).</p>
+      <p>Резервный способ без токена: «Сохранить оба файла» → положи их в папку сайта → запусти <code>push.bat</code>(
+      или держи окно <code>auto-push.bat</code> открытым — оно отправляет само). Сайт обновляется через 1–2 мин после отправки.</p>
       <p>Публикация: репозиторий <a href="https://github.com/TobbuuSad/drg-site">github.com/TobbuuSad/drg-site</a> —
       файлы сайта, Pages включён, обновление по кнопке 🔄 выше подгружает свежак прямо из сети.</p>
     </div>
@@ -158,7 +165,113 @@
   function persist(){
     try{ localStorage.setItem(KEY, JSON.stringify(players, null, 2)); }catch(e){}
     render();
+    schedulePublish();
   }
+
+  // ---------- прямая публикация в GitHub ----------
+  var OWNER = "TobbuuSad", REPO = "drg-site", BRANCH = "main";
+  var TOKEN_KEY = "drg.ghToken";
+  var AUTO_KEY = "drg.ghAuto";
+  var pubTimer = null;
+
+  function token(){ try{ return localStorage.getItem(TOKEN_KEY) || ""; }catch(e){ return ""; } }
+  function autoOn(){ try{ var v = localStorage.getItem(AUTO_KEY); return v === null ? true : v !== "0"; }catch(e){ return true; } }
+
+  function setPub(t){
+    var el = document.getElementById("pubStatus");
+    if(el) el.textContent = t;
+  }
+
+  function renderAutoBtn(){
+    document.getElementById("btnAuto").textContent = "Автопубликация: " + (autoOn() ? "ВКЛ" : "ВЫКЛ");
+  }
+
+  function b64(s){
+    return btoa(unescape(encodeURIComponent(s)));
+  }
+
+  function ghHeaders(){
+    return {
+      "Authorization": "Bearer " + token(),
+      "Accept": "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28"
+    };
+  }
+
+  function putFile(path, content, message){
+    var base = "https://api.github.com/repos/" + OWNER + "/" + REPO + "/contents/" + path;
+    return fetch(base + "?ref=" + BRANCH, { headers: ghHeaders() }).then(function(r){
+      if(r.status === 404) return {}; // файла ещё нет
+      if(!r.ok) return r.json().then(function(j){ throw new Error((j && j.message) || "GitHub " + r.status); });
+      return r.json();
+    }).then(function(cur){
+      var body = {
+        message: message || "Update roster",
+        content: b64(content),
+        branch: BRANCH
+      };
+      if(cur && cur.sha) body.sha = cur.sha;
+      return fetch(base, { method: "PUT", headers: ghHeaders(), body: JSON.stringify(body) });
+    }).then(function(r){
+      if(!r.ok) return r.json().then(function(j){
+        throw new Error((j && j.message) ? (j.message + (j.errors ? " " + JSON.stringify(j.errors) : "")) : "GitHub " + r.status);
+      });
+      return r.json();
+    });
+  }
+
+  function askToken(){
+    var t = prompt("Вставь персональный токен GitHub с правом 'Contents: Read and write' для репозитория TobbuuSad/drg-site.\n\n" +
+      "Создать токен: github.com/settings/personal-access-tokens/new\n\n" +
+      "Токен хранится только в этом браузере и передаётся только GitHub.");
+    if(t && t.trim()){
+      try{ localStorage.setItem(TOKEN_KEY, t.trim()); }catch(e){}
+      setPub("Токен сохранён — можно публиковать 🚀");
+    }
+  }
+
+  function publish(byUser){
+    var t = token();
+    if(!t){
+      if(byUser) askToken(); else setPub("Нет токена — нажми 🔑 Токен");
+      return;
+    }
+    setPub("Публикация на GitHub…");
+    var body = JSON.stringify(players, null, 2) + "\n";
+    var js = "window.PLAYERS = " + body + ";\n";
+    putFile("players.json", body, "Update roster (site editor)")
+      .then(function(){ return putFile("players.js", js, "Update players.js (site editor)"); })
+      .then(function(){ setPub("✅ Опубликовано в " + now() + " — сайт обновится через 1–2 мин"); })
+      .catch(function(e){
+        var msg = e && e.message ? e.message : String(e);
+        setPub("❌ " + msg);
+        if(/401|Bad credentials/i.test(msg)){
+          try{ localStorage.removeItem(TOKEN_KEY); }catch(x){}
+          if(byUser) askToken();
+        }
+      });
+  }
+
+  function schedulePublish(){
+    var t = token();
+    if(!t){ setPub("Правки не опубликованы — нужна публикация 🚀 (нет токена)"); return; }
+    if(!autoOn()){ setPub("Незавершённая правка — автопубликация ВЫКЛ, нажми 🚀"); return; }
+    if(pubTimer){ clearTimeout(pubTimer); pubTimer = null; }
+    setPub("Автопубликация через 5 сек…");
+    pubTimer = setTimeout(function(){ pubTimer = null; publish(false); }, 5000);
+  }
+
+  document.getElementById("btnPublish").addEventListener("click", function(){
+    if(pubTimer){ clearTimeout(pubTimer); pubTimer = null; }
+    publish(true);
+  });
+  document.getElementById("btnToken").addEventListener("click", askToken);
+  document.getElementById("btnAuto").addEventListener("click", function(){
+    try{ localStorage.setItem(AUTO_KEY, autoOn() ? "0" : "1"); }catch(e){}
+    renderAutoBtn();
+    setPub(autoOn() ? "Автопубликация включена" : "Автопубликация отключена");
+  });
+  renderAutoBtn();
 
   function download(name, text){
     var blob = new Blob([text], {type:"application/octet-stream"});
