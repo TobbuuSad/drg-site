@@ -373,7 +373,7 @@
       block.appendChild(head);
       // сетка карточек в стиле holyworld staffs
       var grid = document.createElement("div");
-      grid.style.cssText = "display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:10px; justify-content:center";
+      grid.style.cssText = "display:flex; flex-wrap:wrap; gap:10px; justify-content:center";
       members.forEach(function(m){
         grid.appendChild(memberCard(m));
       });
@@ -397,6 +397,7 @@
     var card = document.createElement("div");
     card.className = "memberCard";
     card.style.cssText =
+      "width:150px; box-sizing:border-box;" +
       "background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.09); border-radius:12px;" +
       "padding:14px 8px; text-align:center; cursor:pointer; transition:transform .12s ease, background .12s ease, border-color .12s ease";
     var inner = '<img src="' + headUrl(p).replace(/"/g, "%22") + '" alt="" loading="lazy"' +
