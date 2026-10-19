@@ -21,7 +21,7 @@ window.PLAYERS = [
   },
   {
     "nick": "__Tachyon_",
-    "position": "Плейбой",
+    "position": "Паладин",
     "discord": "_grim_5515"
   },
   {
@@ -30,9 +30,9 @@ window.PLAYERS = [
     "discord": "nergvestin"
   },
   {
-    "nick": "Sxnsee",
-    "position": "Лайтовец",
-    "discord": "sxnsee."
+    "nick": "DgiDgishka",
+    "position": "Страж",
+    "discord": "gg_k123"
   }
 ]
 ;
