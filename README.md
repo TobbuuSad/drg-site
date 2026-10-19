@@ -15,7 +15,7 @@
 
 Файл мода лежит прямо в репозитории:
 
-👉 **[drg-nametags-1.0.0.jar](drg-nametags-1.0.0.jar)**
+👉 **[drg-nametags-1.0.0.jar](https://github.com/TobbuuSad/drg-site/releases)**
 
 (на странице GitHub нажмите на файл → кнопка «Download raw file», или прямая ссылка:
 `https://github.com/TobbuuSad/drg-site/raw/main/drg-nametags-1.0.0.jar`)
