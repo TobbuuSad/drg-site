@@ -22,7 +22,7 @@ jobs:
       - name: Собрать файлы для зеркала
         run: |
           mkdir -p deploy
-          for f in index.html players.json players.js README.md; do
+          for f in index.html players.json players.js README.md bg.jpg; do
             [ -f "$f" ] && cp "$f" deploy/
           done
           [ -f drg-nametags-1.0.0.jar ] && cp drg-nametags-1.0.0.jar deploy/
