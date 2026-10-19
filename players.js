@@ -37,7 +37,7 @@ window.PLAYERS = [
   },
   {
     "nick": "Sxnsee",
-    "position": "Лайтовец",
+    "position": "Проверка",
     "discord": "sxnsee.",
     "head": ""
   },
