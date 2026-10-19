@@ -40,19 +40,19 @@ window.PLAYERS = [
     "discord": "DgiDgishka"
   },
   {
-    "nick": "Santell_",
-    "position": "главный лох",
-    "discord": "ПОЗОРИЩЕ СЕМЬИ"
+    "nick": "NyaPoka",
+    "position": "Магистр",
+    "discord": "nyapokakids"
+  },
+  {
+    "nick": "1_InFeRnUs_1",
+    "position": "Страж",
+    "discord": ".yarlik"
   },
   {
     "nick": "renal999",
     "position": "Грифер",
     "discord": "Вор в законе"
-  },
-  {
-    "nick": "NyaPoka",
-    "position": "Лудик",
-    "discord": "Охрана денег"
   }
 ]
 ;
