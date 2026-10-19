@@ -42,7 +42,7 @@
   .badge{display:inline-block;background:var(--panel2);border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:2px 10px;font-size:12px}
   .empty{color:var(--muted);padding:16px 10px;text-align:center}
   a{color:var(--teal)}
-  body.locked #editorCard, body.locked #toolsCard{display:none}
+  body.locked #editorCard, body.locked #toolsCard, body.locked #tableCard{display:none}
 </style>
 </head>
 <body>
@@ -95,7 +95,8 @@
     </div>
     <datalist id="posList"></datalist>
     </div>
-    <div class="row" style="margin-top:12px">
+    <div class="card" id="tableCard" style="margin-top:12px">
+    <div class="row">
       <div class="field" style="max-width:260px"><label>Поиск</label><input id="fSearch" placeholder="фильтр по таблице"></div>
       <button id="btnRefresh" title="Добавить игроков с сервера, которых нет в таблице. Ваши несохранённые правки сохранятся.">🔄 Обновить список</button>
       <button id="btnClearDraft" title="Стереть локальный черновик браузера и перечитать данные с сервера">🗑 Сбросить черновик</button>
@@ -106,6 +107,7 @@
       <thead><tr><th style="width:28%">Ник</th><th style="width:30%">Должность</th><th style="width:28%">Дискорд</th><th class="actions">Действия</th></tr></thead>
       <tbody id="tbody"></tbody>
     </table>
+    </div>
   </div>
 
   <!-- всплывающее окно редактирования игрока -->
@@ -344,6 +346,8 @@
     var showTable = name === "table";
     document.getElementById("editorCard").style.display = showTable ? "" : "none";
     document.getElementById("toolsCard").style.display = showTable ? "" : "none";
+    var tc = document.getElementById("tableCard");
+    if(tc){ tc.style.display = showTable ? "" : "none"; }
     document.getElementById("clanCard").style.display = showTable ? "none" : "";
     document.getElementById("tabTableBtn").style.opacity = showTable ? "1" : ".55";
     document.getElementById("tabClanBtn").style.opacity = showTable ? ".55" : "1";
