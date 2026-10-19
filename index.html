@@ -7,6 +7,7 @@
 <script src="https://tobbuusad.github.io/drg-site/players.js"></script>
 <style>
   :root{
+    color-scheme:dark;
     --bg:#101316; --panel:#181d21; --panel2:#1f262b; --line:#2a333a;
     --text:#e8eef2; --muted:#93a4b0; --teal:#26e5c0; --teal2:#1c9c85;
     --gold:#f4b942; --red:#e5606d;
@@ -57,6 +58,9 @@
   td .disc{color:#8ab4ff}
   tr:last-child td{border-bottom:none}
   .actions{white-space:nowrap;text-align:right}
+  /* тёмные нативные элементы: выпадающий список формата */
+  select{background-color:var(--panel2); color:var(--text)}
+  select option{background-color:#1f262b; color:#e8eef2}
   .tools{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center}
   .hint{color:var(--muted);font-size:13px;margin-top:10px;line-height:1.55}
   .hint code{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:12.5px}
@@ -98,7 +102,7 @@
     </div>
     <div class="row">
       <div class="field" style="max-width:300px"><label>Формат кода</label>
-        <select id="gFormat" style="width:100%; background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:8px; color:inherit; padding:8px">
+        <select id="gFormat" style="width:100%; background:var(--panel2); border:1px solid var(--line); border-radius:8px; color:var(--text); padding:8px">
           <option value="amp">&#38;#RRGGBB — CMI, EssentialsX</option>
           <option value="legacy">&#38;x&#38;R&#38;G&#38;B&#38;B — старые версии</option>
           <option value="minimsg">&lt;#RRGGBB&gt; — MiniMessage</option>
