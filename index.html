@@ -42,6 +42,7 @@
   .badge{display:inline-block;background:var(--panel2);border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:2px 10px;font-size:12px}
   .empty{color:var(--muted);padding:16px 10px;text-align:center}
   a{color:var(--teal)}
+  body.locked #editorCard, body.locked #toolsCard{display:none}
 </style>
 </head>
 <body>
@@ -51,7 +52,21 @@
     <p>Таблица игроков мода DRG Nametags: ник в игре, должность и дискорд. Надпись над головой берётся отсюда.</p>
   </header>
 
-  <div class="card">
+  <div class="card" id="accessCard">
+    <h2 style="margin:0 0 8px;font-size:18px">🔐 Доступ к сайту</h2>
+    <div class="tools" style="margin-top:0">
+      <button id="btnAccessToggle">Вход по коду</button>
+      <span class="badge" id="accessStatus"></span>
+    </div>
+    <div class="hint">
+      <p>Просмотр состава — открыт для всех. Редактирование списка, публикация в GitHub и сохранение файлов
+      доступны только после входа с кодом доступа (код задаётся в константе <code>ACCESS_CODE</code> в <code>index.html</code>).</p>
+      <p>Примечание: защита кодом — программная (таблица всё равно публична в <code>players.json</code>),
+      она нужны чтобы не путать и не портить данные случайно. GitHub-репозиторий защищают права токена.</p>
+    </div>
+  </div>
+
+  <div class="card" id="editorCard">
     <div class="row">
       <div class="field"><label>Ник в игре</label><input id="fNick" placeholder="Steve"></div>
       <div class="field"><label>Должность</label><input id="fPos" placeholder="Офицер"></div>
@@ -71,7 +86,7 @@
     </table>
   </div>
 
-  <div class="card">
+  <div class="card" id="toolsCard">
     <div class="tools">
       <button id="btnPublish" title="Записать players.json и players.js в репозиторий GitHub прямо сейчас">🚀 Опубликовать на GitHub</button>
       <button id="btnAuto" class="ghost" title="Публиковать автоматически после правки списка">Автопубликация: ВКЛ</button>
@@ -104,6 +119,32 @@
 (function(){
   var KEY = "drg.players";
   var players = load();
+
+  // ---------- доступ к редактированию ----------
+  var ACCESS_KEY = "drg.access";
+  var ACCESS_CODE = "drg2026"; // поменяй, если хочешь свой код
+  var access = (function(){ try{ return localStorage.getItem(ACCESS_KEY) === "yes"; }catch(e){ return false; } })();
+
+  function renderAccess(){
+    document.body.classList.toggle("locked", !access);
+    var st = document.getElementById("accessStatus");
+    var btn = document.getElementById("btnAccessToggle");
+    if(access){ st.textContent = "✅ Доступ открыт — редактирование и публикация"; btn.textContent = "Выйти"; }
+    else { st.textContent = "🔒 Доступ закрыт — состав смотреть можно, редактировать нельзя"; btn.textContent = "Вход по коду"; }
+  }
+
+  document.getElementById("btnAccessToggle").addEventListener("click", function(){
+    if(access){ access = false; try{ localStorage.removeItem(ACCESS_KEY); }catch(e){} renderAccess(); return; }
+    var code = prompt("Введите код доступа к редактированию:");
+    if(code === null) return;
+    if(code.trim() === ACCESS_CODE){
+      access = true; try{ localStorage.setItem(ACCESS_KEY, "yes"); }catch(e){}
+      renderAccess();
+    } else {
+      alert("Неверный код доступа");
+    }
+  });
+  renderAccess();
 
   function load(){
     // 1) черновик из localStorage, 2) свежий fetch players.json (без кэша), 3) запас — window.PLAYERS
@@ -327,6 +368,7 @@
   document.getElementById("fSearch").addEventListener("input", render);
 
   document.getElementById("btnAdd").addEventListener("click", function(){
+    if(!access){ alert("Доступ закрыт — войдите по коду в разделе «Доступ к сайту»"); return; }
     var nick = document.getElementById("fNick").value.trim();
     if(!nick){ alert("Укажите ник игрока"); return; }
     players.push({
@@ -342,9 +384,13 @@
 
   document.getElementById("tbody").addEventListener("click", function(e){
     var del = e.target.getAttribute("data-del");
-    if(del !== null){ players.splice(Number(del), 1); persist(); return; }
+    if(del !== null){
+      if(!access){ alert("Доступ закрыт — войдите по коду в разделе «Доступ к сайту»"); return; }
+      players.splice(Number(del), 1); persist(); return;
+    }
     var edit = e.target.getAttribute("data-edit");
     if(edit !== null){
+      if(!access){ alert("Доступ закрыт — войдите по коду в разделе «Доступ к сайту»"); return; }
       var p = players[Number(edit)];
       var n = prompt("Ник:", p.nick); if(n === null) return;
       var pos = prompt("Должность:", p.position); if(pos === null) return;
