@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DRG — состав</title>
+<title>DRG — Minecraft клан (сервер Sakeva)</title>
 <script src="https://tobbuusad.github.io/drg-site/players.js"></script>
 <style>
   :root{
@@ -69,8 +69,8 @@
 <body>
 <div class="wrap">
   <header>
-    <h1><span class="drg">DRG</span> — состав подразделения</h1>
-    <p>Таблица игроков мода DRG Nametags: ник в игре, должность и дискорд. Надпись над головой берётся отсюда.</p>
+    <h1><span class="drg">DRG</span> — Minecraft клан</h1>
+    <p>Сервер: <b>Sakeva</b>. Состав клана: ник, должность и дискорд — видно и на сайте, и над головой в игре.</p>
   </header>
 
   <!-- плавающая кнопка «Войти» слева сверху (для гостей) -->
@@ -80,7 +80,6 @@
   <div id="tabs" style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap">
     <button id="tabTableBtn" class="ghost" style="opacity:.55">📋 Таблица состава</button>
     <button id="tabClanBtn" class="ghost" style="opacity:.55">🐉 Должности клана</button>
-    <button id="tabAccessBtn" class="ghost" style="opacity:.55">🔐 Войти</button>
   </div>
 
   <div class="card" id="accessCard" style="display:none">
@@ -264,18 +263,19 @@
       st.textContent = "✅ Вход выполнен: " + access + " — редактирование и публикация";
       btn.textContent = "Выйти";
       loginF.style.display = "none"; passF.style.display = "none";
-      document.getElementById("tabAccessBtn").textContent = "✅ Аккаунт";
     } else {
       st.textContent = "🔒 Доступ закрыт — введите логин и пароль";
       btn.textContent = "Войти";
       loginF.style.display = ""; passF.style.display = "";
-      document.getElementById("tabAccessBtn").textContent = "🔐 Войти";
     }
-    // доступ-вкладка: у гостей скрыта кнопка «Таблица состава», плавающая «Войти» слева сверху
+    // доступ-вкладка открывается плавающей кнопкой слева сверху (вход в «Войти», после входа — «Аккаунт»)
     var tabTableBtn = document.getElementById("tabTableBtn");
     tabTableBtn.style.display = access ? "" : "none";
     var gotoBtn = document.getElementById("btnGotoLogin");
-    if(gotoBtn){ gotoBtn.style.display = access ? "none" : ""; }
+    if(gotoBtn){
+      gotoBtn.style.display = "";
+      gotoBtn.textContent = access ? "✅ Аккаунт" : "🔐 Войти";
+    }
     document.getElementById("tabs").style.display = "flex";
     if(access){ showTab("table"); } else { showTab("clan"); }
   }
@@ -391,8 +391,7 @@
     document.getElementById("accessCard").style.display = showAccess ? "" : "none";
     var marks = [
       ["tabTableBtn", showTable],
-      ["tabClanBtn", !showTable && !showAccess],
-      ["tabAccessBtn", showAccess]
+      ["tabClanBtn", !showTable && !showAccess]
     ];
     marks.forEach(function(m){
       var btn = document.getElementById(m[0]);
@@ -402,7 +401,6 @@
   }
   document.getElementById("tabTableBtn").addEventListener("click", function(){ showTab("table"); });
   document.getElementById("tabClanBtn").addEventListener("click", function(){ showTab("clan"); });
-  document.getElementById("tabAccessBtn").addEventListener("click", function(){ showTab("access"); });
 
   // ---------- страницы клана / роли ----------
   var RANKS = ["Хранитель", "Магистр", "Страж", "Паладин", "Рыцарь", "Лайтовец", "Клоун"];
