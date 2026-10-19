@@ -60,7 +60,9 @@
     </div>
     <div class="row" style="margin-top:12px">
       <div class="field" style="max-width:260px"><label>Поиск</label><input id="fSearch" placeholder="фильтр по таблице"></div>
+      <button id="btnRefresh" title="Загрузить свежие опубликованные данные с сервера">🔄 Обновить список</button>
       <span class="badge" id="count"></span>
+      <span class="badge" id="syncStatus"></span>
     </div>
     <table>
       <thead><tr><th style="width:28%">Ник</th><th style="width:30%">Должность</th><th style="width:28%">Дискорд</th><th class="actions">Действия</th></tr></thead>
@@ -80,14 +82,12 @@
       <p><b>Как это работает с модом.</b> Мод раз в N минут (задаётся в <code>config/drg-nametags.json</code>,
       поле <code>refreshSeconds</code>) скачивает файл <code>players.json</code> по адресу из конфига
       (<code>siteUrl</code>) и помещает содержимое в свою локальную базу. Код мода при этом менять не нужно.</p>
-      <p><b>Как опубликовать изменения.</b> Отредактируйте таблицу выше, затем нажмите «Сохранить оба файла» и
-      положите скачанные <code>players.json</code> и <code>players.js</code> на ваш хостинг (заменяя старые файлы).
-      Варианты хостинга:</p>
-      <p>1) <b>GitHub Pages</b>: положите файлы сайта в репозиторий (Settings → Pages). неприхотливо и всегда онлайн;</p>
-      <p>2) <b>Локально рядом с сервером</b>: в папке сайта выполните <code>python -m http.server 8000</code>;
-      в конфиге мода укажите <code>http://IP-компьютера:8000/players.json</code>;</p>
-      <p>3) любой другой статический хостинг — важно лишь, чтобы по адресу из конфига открывался <code>players.json</code>.</p>
-      <p>Адрес в браузере смотрится по адресу сайта, а мод читает именно <code>players.json</code>.</p>
+      <p><b>Как опубликовать изменения.</b> Отредактируйте таблицу выше, нажмите «Сохранить оба файла», затем положите файлы в
+      папку сайта и запустите <code>push.bat</code> (он сам возьмёт свежие файлы из «Загрузок», сделает commit
+      и отправит на GitHub). Либо правьте <code>players.json</code> прямо на странице репозитория GitHub
+      (карандаш рядом с файлом). Через 1–2 минуты сайт обновится автоматически.</p>
+      <p>Публикация: репозиторий <a href="https://github.com/TobbuuSad/drg-site">github.com/TobbuuSad/drg-site</a> —
+      файлы сайта, Pages включён, обновление по кнопке 🔄 выше подгружает свежак прямо из сети.</p>
     </div>
   </div>
 </div>
@@ -98,15 +98,30 @@
   var players = load();
 
   function load(){
-    // 1) черновик из localStorage, 2) window.PLAYERS из players.js, 3) fetch players.json
+    // 1) черновик из localStorage, 2) свежий fetch players.json (без кэша), 3) запас — window.PLAYERS
     try{
       var raw = localStorage.getItem(KEY);
       if(raw){ var arr = JSON.parse(raw); if(Array.isArray(arr)) return normalize(arr); }
     }catch(e){}
-    if(Array.isArray(window.PLAYERS)) return normalize(window.PLAYERS);
-    fetch("players.json").then(function(r){ if(r.ok) return r.json(); }).then(function(data){
-      if(Array.isArray(data)){ players = normalize(data); render(); } }).catch(function(){});
+    setSyncStatus("Загрузка с сервера…");
+    fetch("players.json?t=" + Date.now(), {cache:"no-store"}).then(function(r){
+      if(!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    }).then(function(data){
+      if(data && Array.isArray(data.players)) data = data.players;
+      if(Array.isArray(data)){ players = normalize(data); render(); setSyncStatus("Сервер: " + players.length + " игрок(ов), " + now()); }
+    }).catch(function(){
+      if(Array.isArray(window.PLAYERS)){ players = normalize(window.PLAYERS); render(); setSyncStatus("Установлено отключение от сервера — показываю данные players.js"); }
+      else setSyncStatus("Ошибка загрузки данных");
+    });
     return [];
+  }
+
+  function now(){ return new Date().toLocaleTimeString(); }
+
+  function setSyncStatus(text){
+    var el = document.getElementById("syncStatus");
+    if(el) el.textContent = text;
   }
 
   function normalize(arr){
@@ -194,6 +209,23 @@
       players[Number(edit)] = { nick:n, position:pos.trim(), discord:dsc.trim() };
       persist();
     }
+  });
+
+  document.getElementById("btnRefresh").addEventListener("click", function(){
+    setSyncStatus("Обновление…");
+    fetch("players.json?t=" + Date.now(), {cache:"no-store"}).then(function(r){
+      if(!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    }).then(function(data){
+      if(data && Array.isArray(data.players)) data = data.players;
+      if(!Array.isArray(data)) throw new Error("неверный формат");
+      players = normalize(data);
+      try{ localStorage.removeItem(KEY); }catch(e){}
+      render();
+      setSyncStatus("Обновлено: " + players.length + " игрок(ов), " + now());
+    }).catch(function(e){
+      setSyncStatus("Ошибка обновления: " + e.message);
+    });
   });
 
   document.getElementById("btnSaveJson").addEventListener("click", function(){
