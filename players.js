@@ -1,7 +1,7 @@
 window.PLAYERS = [
   {
     "nick": "TobbuuSad",
-    "position": "пидорас",
+    "position": "Король минета",
     "discord": "Знать не надо"
   },
   {
@@ -21,7 +21,7 @@ window.PLAYERS = [
   },
   {
     "nick": "__Tachyon_",
-    "position": "Мальчишк",
+    "position": "Паладин",
     "discord": "_grim_5515"
   },
   {
