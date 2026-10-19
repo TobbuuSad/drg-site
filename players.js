@@ -21,7 +21,7 @@ window.PLAYERS = [
   },
   {
     "nick": "__Tachyon_",
-    "position": "Паладин",
+    "position": "67",
     "discord": "_grim_5515"
   },
   {
