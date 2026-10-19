@@ -39,6 +39,21 @@
   td{border-bottom:1px solid var(--line);padding:10px}
   td.nick{font-weight:700}
   td .pos{color:var(--gold)}
+  /* переливающийся градиентный текст (цвета по роли) */
+  .sheen{
+    background-size:200% 100%;
+    -webkit-background-clip:text; background-clip:text;
+    color:transparent !important;
+    animation:sheen 2.6s linear infinite;
+  }
+  @keyframes sheen{
+    0%{background-position:0% 0%}
+    100%{background-position:200% 0%}
+  }
+  .sheenPill{
+    background-size:200% 100%;
+    animation:sheen 2.6s linear infinite;
+  }
   td .disc{color:#8ab4ff}
   tr:last-child td{border-bottom:none}
   .actions{white-space:nowrap;text-align:right}
@@ -368,6 +383,27 @@
   // ---------- страницы клана / роли ----------
   var RANKS = ["Хранитель", "Магистр", "Страж", "Паладин", "Рыцарь", "Лайтовец", "Клоун"];
 
+  // фирменные цвета ролей (переливание: градиент c1 -> c2)
+  var ROLE_COLORS = {
+    "клоун":     ["#ffffff", "#ff0000"],
+    "хранитель": ["#6013bd", "#a021ff"],
+    "магистр":   ["#ffd500", "#fff5b1"],
+    "страж":     ["#9200ff", "#b56dfc"],
+    "паладин":   ["#0002ff", "#6d6efc"],
+    "рыцарь":    ["#2bcf84", "#7fff62"],
+    "лайтовец":  ["#38b71c", "#2eff20"]
+  };
+
+  function roleGradient(pos){
+    var arr = ROLE_COLORS[String(pos || "").trim().toLowerCase()];
+    if(!arr){ return null; }
+    return "linear-gradient(90deg, " + arr[0] + ", " + arr[1] + ", " + arr[0] + ")";
+  }
+  function roleColor2(pos){
+    var arr = ROLE_COLORS[String(pos || "").trim().toLowerCase()];
+    return arr ? arr[1] : null;
+  }
+
   function renderClan(){
     var box = document.getElementById("clanList");
     if(!box){ return; }
@@ -383,18 +419,24 @@
       var block = document.createElement("div");
       block.style.cssText = "margin-bottom:20px";
       // заголовок роли — плашка с числом
+      var grad = roleGradient(rank);
+      var c2 = roleColor2(rank) || "#db20db";
       var head = document.createElement("div");
       head.style.cssText = "display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:10px";
       head.innerHTML =
-        '<span style="background:linear-gradient(90deg, rgba(219,32,219,.25), rgba(219,32,219,.08)); border:1px solid rgba(219,32,219,.5);' +
-        'color:#db20db; font-weight:700; padding:4px 12px; border-radius:999px; font-size:14px">' + esc(rank) + '</span>' +
+        '<span style="background:rgba(255,255,255,.05); border:1px solid ' + c2 + '55;' +
+        'padding:4px 14px; border-radius:999px; font-size:14px; font-weight:700">' +
+        (grad
+          ? '<span class="sheen" style="display:inline-block; background-image:' + grad + '">' + esc(rank) + '</span>'
+          : '<span style="color:#db20db">' + esc(rank) + '</span>') +
+        '</span>' +
         '<span style="opacity:.55; font-size:12px">' + members.length + ' чел.</span>';
       block.appendChild(head);
       // сетка карточек в стиле holyworld staffs
       var grid = document.createElement("div");
       grid.style.cssText = "display:flex; flex-wrap:wrap; gap:10px; justify-content:center";
       members.forEach(function(m){
-        grid.appendChild(memberCard(m));
+        grid.appendChild(memberCard(m, rank));
       });
       block.appendChild(grid);
       box.appendChild(block);
@@ -412,24 +454,35 @@
     return "https://minotar.net/helm/" + encodeURIComponent(nick) + "/64.png";
   }
 
-  function memberCard(p){
+  function memberCard(p, rank){
     var card = document.createElement("div");
     card.className = "memberCard";
     card.style.cssText =
       "width:150px; box-sizing:border-box;" +
       "background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.09); border-radius:12px;" +
       "padding:14px 8px; text-align:center; cursor:pointer; transition:transform .12s ease, background .12s ease, border-color .12s ease";
+    var grad = roleGradient(rank || p.position);
+    var c2 = roleColor2(rank || p.position);
+    var nickHtml = grad
+      ? '<span class="sheen" style="display:inline-block; background-image:' + grad + '">' + esc(p.nick) + '</span>'
+      : esc(p.nick);
     var inner = '<img src="' + headUrl(p).replace(/"/g, "%22") + '" alt="" loading="lazy"' +
       ' style="width:56px; height:56px; image-rendering:pixelated; border-radius:8px; background:rgba(0,0,0,.35); box-shadow:0 2px 8px rgba(0,0,0,.4)">' +
-      '<div style="font-weight:700; margin-top:8px; font-size:13px; word-break:break-word; color:#eee">' + esc(p.nick) + '</div>';
+      '<div style="font-weight:700; margin-top:8px; font-size:13px; word-break:break-word">' + nickHtml + '</div>';
     if(p.discord){
       inner += '<div style="opacity:.55; font-size:11px; margin-top:3px; word-break:break-word">' + esc(p.discord) + '</div>';
     }
     card.innerHTML = inner;
+    var hoverBg = "rgba(219,32,219,.10)", hoverBorder = "rgba(219,32,219,.55)";
+    if(c2){
+      var n = parseInt(c2.slice(1), 16);
+      hoverBg = "rgba(" + ((n >> 16) & 255) + "," + ((n >> 8) & 255) + "," + (n & 255) + ",.10)";
+      hoverBorder = "rgba(" + ((n >> 16) & 255) + "," + ((n >> 8) & 255) + "," + (n & 255) + ",.55)";
+    }
     card.addEventListener("mouseenter", function(){
       card.style.transform = "translateY(-3px)";
-      card.style.background = "rgba(219,32,219,.10)";
-      card.style.borderColor = "rgba(219,32,219,.55)";
+      card.style.background = hoverBg;
+      card.style.borderColor = hoverBorder;
     });
     card.addEventListener("mouseleave", function(){
       card.style.transform = "";
@@ -587,9 +640,12 @@
       if(q && (p.nick+" "+p.position+" "+p.discord).toLowerCase().indexOf(q) === -1) return;
       shown++;
       var tr = document.createElement("tr");
+      var posGrad = roleGradient(p.position);
       tr.innerHTML =
         '<td class="nick">'+esc(p.nick)+'</td>' +
-        '<td><span class="pos">'+esc(p.position)+'</span></td>' +
+        '<td>' + (posGrad
+          ? '<span class="pos sheen" style="display:inline-block; background-image:'+posGrad+'">'+esc(p.position)+'</span>'
+          : '<span class="pos">'+esc(p.position)+'</span>') + '</td>' +
         '<td><span class="disc">'+esc(p.discord)+'</span></td>' +
         '<td class="actions">' +
           '<button class="edit" data-edit="'+i+'">Изменить</button> ' +
