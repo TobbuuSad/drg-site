@@ -198,9 +198,11 @@
     };
   }
 
-  function putFile(path, content, message){
+  function putFile(path, content, message, attempt){
+    attempt = attempt || 0;
     var base = "https://api.github.com/repos/" + OWNER + "/" + REPO + "/contents/" + path;
-    return fetch(base + "?ref=" + BRANCH, { headers: ghHeaders() }).then(function(r){
+    // "?t=" + no-store = всегда свежая версия файла, иначе GitHub API отдаёт SHA из 60-секундного кэша
+    return fetch(base + "?ref=" + BRANCH + "&t=" + Date.now(), { headers: ghHeaders(), cache: "no-store" }).then(function(r){
       if(r.status === 404) return {}; // файла ещё нет
       if(!r.ok) return r.json().then(function(j){ throw new Error((j && j.message) || "GitHub " + r.status); });
       return r.json();
@@ -217,6 +219,15 @@
         throw new Error((j && j.message) ? (j.message + (j.errors ? " " + JSON.stringify(j.errors) : "")) : "GitHub " + r.status);
       });
       return r.json();
+    }).catch(function(e){
+      var msg = e && e.message ? e.message : String(e);
+      // файл поменялся пока готовили отправку — перечитываем свежий SHA и пробуем снова
+      if(attempt < 2 && /does not match|409/i.test(msg)){
+        return new Promise(function(res){ setTimeout(res, 1500); }).then(function(){
+          return putFile(path, content, message, attempt + 1);
+        });
+      }
+      throw e;
     });
   }
 
