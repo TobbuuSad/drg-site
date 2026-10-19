@@ -1,7 +1,7 @@
 window.PLAYERS = [
   {
     "nick": "TobbuuSad",
-    "position": "Хаслер",
+    "position": "Клоун",
     "discord": "Секрет",
     "head": "Tobbian"
   },
@@ -134,7 +134,8 @@ window.PLAYERS = [
   {
     "nick": "g1lkan_",
     "position": "Паладин",
-    "discord": "diman058422"
+    "discord": "diman058422",
+    "head": ""
   }
 ]
 ;
