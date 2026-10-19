@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DRG — состав</title>
-<script src="players.js"></script>
+<script src="https://tobbuusad.github.io/drg-site/players.js"></script>
 <style>
   :root{
     --bg:#101316; --panel:#181d21; --panel2:#1f262b; --line:#2a333a;
@@ -164,6 +164,8 @@
 <script>
 (function(){
   var KEY = "drg.players";
+  // данные всегда из канонического источника (GitHub Pages), чтобы сайт работал с любого хоста
+  var DATA_BASE = /github\.io$/.test(location.hostname) ? "" : "https://tobbuusad.github.io/drg-site/";
   var players = load();
 
   // ---------- доступ к редактированию (логин + пароль, только SHA-256 хэши) ----------
@@ -283,7 +285,7 @@
       if(raw){ var arr = JSON.parse(raw); if(Array.isArray(arr)){ var draft = normalize(arr); setSyncStatus("Незавершённый черновик: " + draft.length + " игрок(ов). Нажмите 🔄, чтобы дополнить свежими с сервера — черновик не пострадает."); return draft; } }
     }catch(e){}
     setSyncStatus("Загрузка с сервера…");
-    fetch("players.json?t=" + Date.now(), {cache:"no-store"}).then(function(r){
+    fetch(DATA_BASE + "players.json?t=" + Date.now(), {cache:"no-store"}).then(function(r){
       if(!r.ok) throw new Error("HTTP " + r.status);
       return r.json();
     }).then(function(data){
@@ -790,7 +792,7 @@
 
   document.getElementById("btnRefresh").addEventListener("click", function(){
     setSyncStatus("Обновление…");
-    fetch("players.json?t=" + Date.now(), {cache:"no-store"}).then(function(r){
+    fetch(DATA_BASE + "players.json?t=" + Date.now(), {cache:"no-store"}).then(function(r){
       if(!r.ok) throw new Error("HTTP " + r.status);
       return r.json();
     }).then(function(data){
@@ -816,7 +818,7 @@
     if(!confirm("Сбросить локальный черновик браузера и перечитать свежие данные с сервера? Несохранённые правки будут удалены.")) return;
     try{ localStorage.removeItem(KEY); }catch(e){}
     setSyncStatus("Сброс черновика, загрузка с сервера…");
-    fetch("players.json?t=" + Date.now(), {cache:"no-store"}).then(function(r){
+    fetch(DATA_BASE + "players.json?t=" + Date.now(), {cache:"no-store"}).then(function(r){
       if(!r.ok) throw new Error("HTTP " + r.status);
       return r.json();
     }).then(function(data){

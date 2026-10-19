@@ -1,0 +1,30 @@
+name: Mirror to Surge
+
+# Синхронизация зеркала: любой push в main (правка списка с сайта,
+# ручные правки репозитория) перезаливает копию сайта на surge.
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Собрать файлы для зеркала
+        run: |
+          mkdir -p deploy
+          for f in index.html players.json players.js README.md; do
+            [ -f "$f" ] && cp "$f" deploy/
+          done
+          [ -f drg-nametags-1.0.0.jar ] && cp drg-nametags-1.0.0.jar deploy/
+          echo "dragon-orden-minecraft.surge.sh" > deploy/CNAME
+          ls -la deploy
+
+      - name: Деплой на dragon-orden-minecraft.surge.sh
+        run: npx surge ./deploy dragon-orden-minecraft.surge.sh --token ${{ secrets.SURGE_TOKEN }}
