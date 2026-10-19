@@ -82,6 +82,11 @@ window.PLAYERS = [
     "position": "Рыцарь",
     "discord": "b0dochka",
     "head": ""
+  },
+  {
+    "nick": "JleXa_HoBuK",
+    "position": "Рыцарь",
+    "discord": "jlexa_hobuk_2"
   }
 ]
 ;
