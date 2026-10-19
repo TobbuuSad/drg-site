@@ -1,7 +1,7 @@
 window.PLAYERS = [
   {
     "nick": "TobbuuSad",
-    "position": "Хранитель",
+    "position": "Клоун",
     "discord": "Секрет",
     "head": "Tobbian"
   },
