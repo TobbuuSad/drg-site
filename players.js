@@ -90,8 +90,9 @@ window.PLAYERS = [
   },
   {
     "nick": "bifoze",
-    "position": "",
-    "discord": ""
+    "position": "Рыцарь",
+    "discord": "mikricaa",
+    "head": ""
   }
 ]
 ;
