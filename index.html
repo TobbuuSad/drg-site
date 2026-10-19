@@ -71,9 +71,16 @@
   <div class="card" id="editorCard">
     <div class="row">
       <div class="field"><label>Ник в игре</label><input id="fNick" placeholder="Steve"></div>
-      <div class="field"><label>Должность</label><input id="fPos" placeholder="Офицер"></div>
+      <div class="field"><label>Должность</label><input id="fPos" placeholder="Офицер" list="posList"></div>
       <div class="field"><label>Дискорд</label><input id="fDisc" placeholder="steve_drg"></div>
       <button id="btnAdd">Добавить</button>
+      <button id="btnSavePos" class="ghost" title="Запомнить должность из поля выше, чтобы потом выбирать её одним кликом">💾 Сохранить должность</button>
+    </div>
+    <div class="row" id="posRow" style="margin-top:10px; display:none">
+      <span class="badge" style="background:rgba(255,255,255,.06)">💾 Сохранённые должности (клик — подставить):</span>
+      <span id="posChips" style="display:flex; gap:6px; flex-wrap:wrap"></span>
+    </div>
+    <datalist id="posList"></datalist>
     </div>
     <div class="row" style="margin-top:12px">
       <div class="field" style="max-width:260px"><label>Поиск</label><input id="fSearch" placeholder="фильтр по таблице"></div>
@@ -156,23 +163,24 @@
     }
     words[words.length] = (bitLen / 0x100000000) | 0;
     words[words.length] = bitLen | 0;
-    for (var j = 64; j < words.length; j++){
-      var w15 = words[j-15], w2 = words[j-2];
-      var s0 = rr(w15, 7) ^ rr(w15, 18) ^ (w15>>>3);
-      var s1 = rr(w2, 17) ^ rr(w2, 19) ^ (w2>>>10);
-      words[j] = (words[j-16] + s0 + words[j-7] + s1) | 0;
-    }
-    var a = 0, b = 0, c = 0, d = 0, e = 0, f = 0, g = 0, h = 0, t1 = 0, t2 = 0;
+    var w = new Array(64);
     for (var blk = 0; blk < words.length; blk += 16){
-      a = H[0]; b = H[1]; c = H[2]; d = H[3]; e = H[4]; f = H[5]; g = H[6]; h = H[7];
-      for (var k = 0; k < 64; k++){
-        t1 = h + (rr(e,6) ^ rr(e,11) ^ rr(e,25)) + ((e&f) ^ (~e&g)) + K[k] + words[blk+k];
-        t2 = (rr(a,2) ^ rr(a,13) ^ rr(a,22)) + ((a&b) ^ (a&c) ^ (b&c));
-        h = g; g = f; f = e; e = d + t1 | 0;
-        d = c; c = b; b = a; a = t1 + t2 | 0;
+      for (var jw = 0; jw < 16; jw++) w[jw] = words[blk+jw] | 0;
+      for (jw = 16; jw < 64; jw++){
+        var w15 = w[jw-15], w2x = w[jw-2];
+        var s0 = rr(w15, 7) ^ rr(w15, 18) ^ (w15>>>3);
+        var s1 = rr(w2x, 17) ^ rr(w2x, 19) ^ (w2x>>>10);
+        w[jw] = (w[jw-16] + s0 + w[jw-7] + s1) | 0;
       }
-      H[0] += a; H[1] += b; H[2] += c; H[3] += d; H[4] += e; H[5] += f; H[6] += g; H[7] += h;
-      a=b=c=d=e=f=g=h=t1=t2=0;
+      var a = H[0], b = H[1], c = H[2], d = H[3], e = H[4], f = H[5], g = H[6], h = H[7];
+      for (var k = 0; k < 64; k++){
+        var t1 = (h + (rr(e,6) ^ rr(e,11) ^ rr(e,25)) + ((e&f) ^ (~e&g)) + K[k] + w[k]) | 0;
+        var t2 = (rr(a,2) ^ rr(a,13) ^ rr(a,22)) + ((a&b) ^ (a&c) ^ (b&c));
+        h = g; g = f; f = e; e = (d + t1) | 0;
+        d = c; c = b; b = a; a = (t1 + t2) | 0;
+      }
+      H[0] = (H[0] + a) | 0; H[1] = (H[1] + b) | 0; H[2] = (H[2] + c) | 0; H[3] = (H[3] + d) | 0;
+      H[4] = (H[4] + e) | 0; H[5] = (H[5] + f) | 0; H[6] = (H[6] + g) | 0; H[7] = (H[7] + h) | 0;
     }
     var hex = "";
     for (var hj = 0; hj < 8; hj++){
@@ -452,15 +460,85 @@
     if(!access){ alert("Доступ закрыт — войдите по логину и паролю в разделе «Доступ к сайту»"); return; }
     var nick = document.getElementById("fNick").value.trim();
     if(!nick){ alert("Укажите ник игрока"); return; }
+    var pos = document.getElementById("fPos").value.trim();
     players.push({
       nick: nick,
-      position: document.getElementById("fPos").value.trim(),
+      position: pos,
       discord: document.getElementById("fDisc").value.trim()
     });
+    rememberPosition(pos); // должность запоминается сама
     document.getElementById("fNick").value = "";
     document.getElementById("fPos").value = "";
     document.getElementById("fDisc").value = "";
     persist();
+  });
+
+  // ---------- Сохранённые должности ----------
+  var POS_KEY = "drg.positions";
+  var savedPositions = [];
+  try{ savedPositions = JSON.parse(localStorage.getItem(POS_KEY) || "[]"); }catch(e){ savedPositions = []; }
+  if(!Array.isArray(savedPositions)) savedPositions = [];
+
+  function savePosStore(){
+    try{ localStorage.setItem(POS_KEY, JSON.stringify(savedPositions)); }catch(e){}
+    renderPosChips();
+  }
+  function rememberPosition(pos){
+    pos = (pos || "").trim();
+    if(!pos){ return false; }
+    var low = pos.toLowerCase();
+    for(var i = 0; i < savedPositions.length; i++){
+      if(String(savedPositions[i]).toLowerCase() === low){ return false; }
+    }
+    savedPositions.unshift(pos);
+    if(savedPositions.length > 40){ savedPositions = savedPositions.slice(0, 40); }
+    savePosStore();
+    return true;
+  }
+  function fillPosDatalist(){
+    var dl = document.getElementById("posList");
+    dl.innerHTML = "";
+    savedPositions.forEach(function(p){
+      var o = document.createElement("option");
+      o.value = p;
+      dl.appendChild(o);
+    });
+  }
+  function renderPosChips(){
+    var row = document.getElementById("posRow");
+    var box = document.getElementById("posChips");
+    if(!savedPositions.length){ row.style.display = "none"; box.innerHTML = ""; fillPosDatalist(); return; }
+    row.style.display = "";
+    box.innerHTML = "";
+    savedPositions.forEach(function(pos, i){
+      var chip = document.createElement("span");
+      chip.style.cssText = "display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:8px;background:rgba(47,185,208,.15);border:1px solid rgba(47,185,208,.4);font-size:12px;cursor:pointer";
+      chip.title = "Клик — подставить должность в поле";
+      var nm = document.createElement("span");
+      nm.textContent = pos;
+      var x = document.createElement("span");
+      x.textContent = "✕";
+      x.title = "Убрать из сохранённых";
+      x.style.opacity = ".6";
+      x.style.cursor = "pointer";
+      x.addEventListener("click", function(ev){ ev.stopPropagation(); savedPositions.splice(i, 1); savePosStore(); });
+      chip.addEventListener("click", function(){
+        var f = document.getElementById("fPos");
+        f.value = pos;
+        f.focus();
+      });
+      chip.appendChild(nm);
+      chip.appendChild(x);
+      box.appendChild(chip);
+    });
+    fillPosDatalist();
+  }
+  document.getElementById("btnSavePos").addEventListener("click", function(){
+    if(!access){ alert("Доступ закрыт — войдите по логину и паролю в разделе «Доступ к сайту»"); return; }
+    var v = document.getElementById("fPos").value.trim();
+    if(!v){ alert("Сначала впишите должность в поле «Должность»"); return; }
+    if(rememberPosition(v)){ setSyncStatus("Должность сохранена: " + v); }
+    else { setSyncStatus("Такая должность уже сохранена"); }
   });
 
   document.getElementById("tbody").addEventListener("click", function(e){
@@ -479,6 +557,7 @@
       n = n.trim();
       if(!n){ alert("Ник не может быть пустым"); return; }
       players[Number(edit)] = { nick:n, position:pos.trim(), discord:dsc.trim() };
+      rememberPosition(pos);
       persist();
     }
   });
@@ -556,6 +635,7 @@
   });
 
   render();
+  renderPosChips();
 })();
 </script>
 </body>
