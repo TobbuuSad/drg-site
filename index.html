@@ -55,14 +55,16 @@
   <div class="card" id="accessCard">
     <h2 style="margin:0 0 8px;font-size:18px">🔐 Доступ к сайту</h2>
     <div class="tools" style="margin-top:0">
-      <button id="btnAccessToggle">Вход по коду</button>
+      <div class="field" style="max-width:180px"><label>Логин</label><input id="fLogin" autocomplete="username" placeholder="логин"></div>
+      <div class="field" style="max-width:180px"><label>Пароль</label><input id="fPassword" type="password" autocomplete="current-password" placeholder="пароль"></div>
+      <button id="btnAccessToggle">Войти</button>
       <span class="badge" id="accessStatus"></span>
     </div>
     <div class="hint">
-      <p>Просмотр состава — открыт для всех. Редактирование списка, публикация в GitHub и сохранение файлов
-      доступны только после входа с кодом доступа (код задаётся в константе <code>ACCESS_CODE</code> в <code>index.html</code>).</p>
-      <p>Примечание: защита кодом — программная (таблица всё равно публична в <code>players.json</code>),
-      она нужны чтобы не путать и не портить данные случайно. GitHub-репозиторий защищают права токена.</p>
+      <p>Просмотр состава — открыт для всех. Редактирование списка и публикация в GitHub доступны только
+      после входа по логину и паролю. Учётные записи задаются в константе <code>ACCESS_USERS</code> в <code>index.html</code>.</p>
+      <p>Примечание: защита — программная, данные списка всё равно публичны в <code>players.json</code>.
+      Реальную защиту правки в репозитории дают права токена GitHub.</p>
     </div>
   </div>
 
@@ -120,30 +122,56 @@
   var KEY = "drg.players";
   var players = load();
 
-  // ---------- доступ к редактированию ----------
+  // ---------- доступ к редактированию (логин + пароль) ----------
   var ACCESS_KEY = "drg.access";
-  var ACCESS_CODE = "drg2026"; // поменяй, если хочешь свой код
-  var access = (function(){ try{ return localStorage.getItem(ACCESS_KEY) === "yes"; }catch(e){ return false; } })();
+  // Учётные записи: логин -> пароль. Пары можно добавлять/менять свободно.
+  var ACCESS_USERS = {
+    "tobbuu": "drg2026"
+    //, "другой_логин": "другой_пароль"
+  };
+  var access = (function(){ try{ return localStorage.getItem(ACCESS_KEY) || ""; }catch(e){ return ""; } })();
 
   function renderAccess(){
     document.body.classList.toggle("locked", !access);
     var st = document.getElementById("accessStatus");
     var btn = document.getElementById("btnAccessToggle");
-    if(access){ st.textContent = "✅ Доступ открыт — редактирование и публикация"; btn.textContent = "Выйти"; }
-    else { st.textContent = "🔒 Доступ закрыт — состав смотреть можно, редактировать нельзя"; btn.textContent = "Вход по коду"; }
+    var loginF = document.getElementById("fLogin");
+    var passF = document.getElementById("fPassword");
+    if(access){
+      st.textContent = "✅ Вход выполнен: " + access + " — редактирование и публикация";
+      btn.textContent = "Выйти";
+      loginF.style.display = "none"; passF.style.display = "none";
+    } else {
+      st.textContent = "🔒 Доступ закрыт — введите логин и пароль";
+      btn.textContent = "Войти";
+      loginF.style.display = ""; passF.style.display = "";
+    }
+  }
+
+  function doLogin(){
+    var login = document.getElementById("fLogin").value.trim();
+    var pass = document.getElementById("fPassword").value;
+    if(!login || !pass){ alert("Введите логин и пароль"); return; }
+    if(ACCESS_USERS[login] && ACCESS_USERS[login] === pass){
+      access = login;
+      try{ localStorage.setItem(ACCESS_KEY, access); }catch(e){}
+      document.getElementById("fLogin").value = ""; document.getElementById("fPassword").value = "";
+      renderAccess();
+    } else {
+      alert("Неверный логин или пароль");
+    }
   }
 
   document.getElementById("btnAccessToggle").addEventListener("click", function(){
-    if(access){ access = false; try{ localStorage.removeItem(ACCESS_KEY); }catch(e){} renderAccess(); return; }
-    var code = prompt("Введите код доступа к редактированию:");
-    if(code === null) return;
-    if(code.trim() === ACCESS_CODE){
-      access = true; try{ localStorage.setItem(ACCESS_KEY, "yes"); }catch(e){}
+    if(access){
+      access = ""; try{ localStorage.removeItem(ACCESS_KEY); }catch(e){}
       renderAccess();
-    } else {
-      alert("Неверный код доступа");
+      return;
     }
+    doLogin();
   });
+  document.getElementById("fPassword").addEventListener("keydown", function(e){ if(e.key === "Enter") doLogin(); });
+  document.getElementById("fLogin").addEventListener("keydown", function(e){ if(e.key === "Enter") doLogin(); });
   renderAccess();
 
   function load(){
@@ -368,7 +396,7 @@
   document.getElementById("fSearch").addEventListener("input", render);
 
   document.getElementById("btnAdd").addEventListener("click", function(){
-    if(!access){ alert("Доступ закрыт — войдите по коду в разделе «Доступ к сайту»"); return; }
+    if(!access){ alert("Доступ закрыт — войдите по логину и паролю в разделе «Доступ к сайту»"); return; }
     var nick = document.getElementById("fNick").value.trim();
     if(!nick){ alert("Укажите ник игрока"); return; }
     players.push({
@@ -385,12 +413,12 @@
   document.getElementById("tbody").addEventListener("click", function(e){
     var del = e.target.getAttribute("data-del");
     if(del !== null){
-      if(!access){ alert("Доступ закрыт — войдите по коду в разделе «Доступ к сайту»"); return; }
+      if(!access){ alert("Доступ закрыт — войдите по логину и паролю в разделе «Доступ к сайту»"); return; }
       players.splice(Number(del), 1); persist(); return;
     }
     var edit = e.target.getAttribute("data-edit");
     if(edit !== null){
-      if(!access){ alert("Доступ закрыт — войдите по коду в разделе «Доступ к сайту»"); return; }
+      if(!access){ alert("Доступ закрыт — войдите по логину и паролю в разделе «Доступ к сайту»"); return; }
       var p = players[Number(edit)];
       var n = prompt("Ник:", p.nick); if(n === null) return;
       var pos = prompt("Должность:", p.position); if(pos === null) return;
