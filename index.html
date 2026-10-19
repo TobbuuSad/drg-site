@@ -73,7 +73,17 @@
     <p>Таблица игроков мода DRG Nametags: ник в игре, должность и дискорд. Надпись над головой берётся отсюда.</p>
   </header>
 
-  <div class="card" id="accessCard">
+  <!-- плавающая кнопка «Войти» слева сверху (для гостей) -->
+  <button id="btnGotoLogin" style="display:none; position:fixed; top:10px; left:10px; z-index:70; padding:6px 14px; border-radius:999px; box-shadow:0 4px 14px rgba(0,0,0,.5)">🔐 Войти</button>
+
+  <!-- вкладки разделов -->
+  <div id="tabs" style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap">
+    <button id="tabTableBtn" class="ghost" style="opacity:.55">📋 Таблица состава</button>
+    <button id="tabClanBtn" class="ghost" style="opacity:.55">🐉 Должности клана</button>
+    <button id="tabAccessBtn" class="ghost" style="opacity:.55">🔐 Войти</button>
+  </div>
+
+  <div class="card" id="accessCard" style="display:none">
     <h2 style="margin:0 0 8px;font-size:18px">🔐 Доступ к сайту</h2>
     <div class="tools" style="margin-top:0">
       <div class="field" style="max-width:180px"><label>Логин</label><input id="fLogin" autocomplete="username" placeholder="логин"></div>
@@ -87,12 +97,6 @@
       <p>Примечание: защита — программная, данные списка всё равно публичны в <code>players.json</code>.
       Реальную защиту правки в репозитории дают права токена GitHub.</p>
     </div>
-  </div>
-
-  <!-- вкладки разделов -->
-  <div id="tabs" style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap">
-    <button id="tabTableBtn" class="ghost" style="opacity:.55">📋 Таблица состава</button>
-    <button id="tabClanBtn" class="ghost" style="opacity:.55">🐉 Должности клана</button>
   </div>
 
   <div class="card" id="editorCard">
@@ -260,16 +264,27 @@
       st.textContent = "✅ Вход выполнен: " + access + " — редактирование и публикация";
       btn.textContent = "Выйти";
       loginF.style.display = "none"; passF.style.display = "none";
+      document.getElementById("tabAccessBtn").textContent = "✅ Аккаунт";
     } else {
       st.textContent = "🔒 Доступ закрыт — введите логин и пароль";
       btn.textContent = "Войти";
       loginF.style.display = ""; passF.style.display = "";
+      document.getElementById("tabAccessBtn").textContent = "🔐 Войти";
     }
-    // «Таблица состава» видна только вошедшим: гостям — вкладки скрыты, открыт раздел должностей
-    var tabsRow = document.getElementById("tabs");
-    if(tabsRow){ tabsRow.style.display = access ? "flex" : "none"; }
+    // доступ-вкладка: у гостей скрыта кнопка «Таблица состава», плавающая «Войти» слева сверху
+    var tabTableBtn = document.getElementById("tabTableBtn");
+    tabTableBtn.style.display = access ? "" : "none";
+    var gotoBtn = document.getElementById("btnGotoLogin");
+    if(gotoBtn){ gotoBtn.style.display = access ? "none" : ""; }
+    document.getElementById("tabs").style.display = "flex";
     if(access){ showTab("table"); } else { showTab("clan"); }
   }
+  document.getElementById("btnGotoLogin").addEventListener("click", function(){
+    showTab("access");
+    window.scrollTo({top: 0, behavior: "smooth"});
+    var f = document.getElementById("fLogin");
+    if(f && f.style.display !== "none"){ f.focus(); }
+  });
 
   function doLogin(){
     var login = document.getElementById("fLogin").value.trim();
@@ -367,18 +382,27 @@
   // ---------- вкладки ----------
   function showTab(name){
     var showTable = name === "table";
+    var showAccess = name === "access";
     document.getElementById("editorCard").style.display = showTable ? "" : "none";
     document.getElementById("toolsCard").style.display = showTable ? "" : "none";
     var tc = document.getElementById("tableCard");
     if(tc){ tc.style.display = showTable ? "" : "none"; }
-    document.getElementById("clanCard").style.display = showTable ? "none" : "";
-    document.getElementById("tabTableBtn").style.opacity = showTable ? "1" : ".55";
-    document.getElementById("tabClanBtn").style.opacity = showTable ? ".55" : "1";
-    document.getElementById("tabTableBtn").style.outline = showTable ? "2px solid rgba(0,163,188,.8)" : "none";
-    document.getElementById("tabClanBtn").style.outline = showTable ? "none" : "2px solid rgba(219,32,219,.8)";
+    document.getElementById("clanCard").style.display = (!showTable && !showAccess) ? "" : "none";
+    document.getElementById("accessCard").style.display = showAccess ? "" : "none";
+    var marks = [
+      ["tabTableBtn", showTable],
+      ["tabClanBtn", !showTable && !showAccess],
+      ["tabAccessBtn", showAccess]
+    ];
+    marks.forEach(function(m){
+      var btn = document.getElementById(m[0]);
+      btn.style.opacity = m[1] ? "1" : ".55";
+      btn.style.outline = m[1] ? "2px solid rgba(0,163,188,.8)" : "none";
+    });
   }
   document.getElementById("tabTableBtn").addEventListener("click", function(){ showTab("table"); });
   document.getElementById("tabClanBtn").addEventListener("click", function(){ showTab("clan"); });
+  document.getElementById("tabAccessBtn").addEventListener("click", function(){ showTab("access"); });
 
   // ---------- страницы клана / роли ----------
   var RANKS = ["Хранитель", "Магистр", "Страж", "Паладин", "Рыцарь", "Лайтовец", "Клоун"];
