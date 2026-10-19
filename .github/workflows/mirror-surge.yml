@@ -13,6 +13,9 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      SURGE_LOGIN: grimcryptox@gmail.com
+      SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -27,4 +30,4 @@ jobs:
           ls -la deploy
 
       - name: Деплой на dragon-orden-minecraft.surge.sh
-        run: npx surge ./deploy dragon-orden-minecraft.surge.sh --token ${{ secrets.SURGE_TOKEN }}
+        run: npx -y surge ./deploy dragon-orden-minecraft.surge.sh
