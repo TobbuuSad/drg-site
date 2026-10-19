@@ -115,8 +115,9 @@ window.PLAYERS = [
   },
   {
     "nick": "thebombmaker",
-    "position": "",
-    "discord": ""
+    "position": "Магистр",
+    "discord": "ontoo",
+    "head": ""
   },
   {
     "nick": "mr__xayc",
