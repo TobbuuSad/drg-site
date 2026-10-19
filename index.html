@@ -61,6 +61,7 @@
     <div class="row" style="margin-top:12px">
       <div class="field" style="max-width:260px"><label>Поиск</label><input id="fSearch" placeholder="фильтр по таблице"></div>
       <button id="btnRefresh" title="Добавить игроков с сервера, которых нет в таблице. Ваши несохранённые правки сохранятся.">🔄 Обновить список</button>
+      <button id="btnClearDraft" title="Стереть локальный черновик браузера и перечитать данные с сервера">🗑 Сбросить черновик</button>
       <span class="badge" id="count"></span>
       <span class="badge" id="syncStatus"></span>
     </div>
@@ -131,11 +132,27 @@
   function normalize(arr){
     return arr.map(function(p){
       return {
-        nick: String(p && (p.nick ?? p.name) || ""),
-        position: String(p && (p.position ?? p.role) || ""),
-        discord: String(p && (p.discord ?? p.tag) || "")
+        nick: clean(String(p && (p.nick ?? p.name) || "")),
+        position: clean(String(p && (p.position ?? p.role) || "")),
+        discord: clean(String(p && (p.discord ?? p.tag) || ""))
       };
     }).filter(function(p){ return p.nick.trim() !== ""; });
+  }
+
+  // Лечение "кракозябр": UTF-8 текст, распакованный в неправильной кодировке (виден как "Р?Р?Р?").
+  // Читает строку как байты Latin-1 и пробует корректно расшифровать как UTF-8.
+  function clean(s){
+    var bytes = [], ok = true, i, c;
+    for(i = 0; i < s.length; i++){
+      c = s.charCodeAt(i);
+      if(c > 255){ return s; } // настоящая кириллица/эмодзи — не трогаем
+      bytes.push(c);
+    }
+    var fixed;
+    try{ fixed = new TextDecoder("utf-8", {fatal:true}).decode(new Uint8Array(bytes)); }
+    catch(e){ return s; }
+    // меняем, только если получилась кириллица (значит это была сломанная кодировка)
+    return /[\u0400-\u04FF]/.test(fixed) ? fixed : s;
   }
 
   function persist(){
@@ -236,6 +253,24 @@
       setSyncStatus("Обновлено: с сервера + новый игрок(ов); ваши правки сохранены. Игроков в таблице: " + players.length + ", " + now());
     }).catch(function(e){
       setSyncStatus("Ошибка обновления: " + e.message);
+    });
+  });
+
+  document.getElementById("btnClearDraft").addEventListener("click", function(){
+    if(!confirm("Сбросить локальный черновик браузера и перечитать свежие данные с сервера? Несохранённые правки будут удалены.")) return;
+    try{ localStorage.removeItem(KEY); }catch(e){}
+    setSyncStatus("Сброс черновика, загрузка с сервера…");
+    fetch("players.json?t=" + Date.now(), {cache:"no-store"}).then(function(r){
+      if(!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    }).then(function(data){
+      if(data && Array.isArray(data.players)) data = data.players;
+      if(!Array.isArray(data)) throw new Error("неверный формат");
+      players = normalize(data);
+      render();
+      setSyncStatus("Сброс: данные с сервера, " + players.length + " игрок(ов), " + now());
+    }).catch(function(e){
+      setSyncStatus("Ошибка сброса: " + e.message);
     });
   });
 
