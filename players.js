@@ -121,8 +121,9 @@ window.PLAYERS = [
   },
   {
     "nick": "mr__xayc",
-    "position": "",
-    "discord": ""
+    "position": "Страж",
+    "discord": "mr__xayc1941",
+    "head": ""
   }
 ]
 ;
