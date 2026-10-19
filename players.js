@@ -127,8 +127,9 @@ window.PLAYERS = [
   },
   {
     "nick": "boss_spy",
-    "position": "",
-    "discord": ""
+    "position": "Рыцарь",
+    "discord": "boss_spy",
+    "head": ""
   }
 ]
 ;
