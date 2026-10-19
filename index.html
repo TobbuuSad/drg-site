@@ -80,6 +80,40 @@
   <div id="tabs" style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap">
     <button id="tabTableBtn" class="ghost" style="opacity:.55">📋 Таблица состава</button>
     <button id="tabClanBtn" class="ghost" style="opacity:.55">🐉 Должности клана</button>
+    <button id="tabGradientBtn" class="ghost" style="opacity:.55">🎨 Градиент</button>
+  </div>
+
+  <div class="card" id="gradientCard" style="display:none">
+    <h2 style="margin:0 0 8px;font-size:18px">🎨 Градиентный текст (Minecraft)</h2>
+    <p class="hint" style="margin-top:0">Набери текст, выбери два цвета — получишь по-символьный градиент и готовый код для плагинов (ника в TAB, /nick, топ-листах и т.п.).</p>
+    <div class="row">
+      <div class="field" style="flex:1 1 240px"><label>Текст</label><input id="gText" placeholder="Пиши сюда текст"></div>
+    </div>
+    <div class="row" style="align-items:center">
+      <div class="field" style="max-width:170px"><label>Цвет №1 (от)</label><input type="color" id="gC1" value="#6013bd" style="width:100%; height:36px; background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:8px; padding:2px"></div>
+      <div class="field" style="max-width:170px"><label>Цвет №2 (до)</label><input type="color" id="gC2" value="#a021ff" style="width:100%; height:36px; background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:8px; padding:2px"></div>
+      <button id="gSwap" class="ghost" title="Поменять цвета местами">↔</button>
+      <label style="display:inline-flex; align-items:center; gap:6px; margin-top:18px"><input type="checkbox" id="gBold"> Жирный</label>
+      <label style="display:inline-flex; align-items:center; gap:6px; margin-top:18px"><input type="checkbox" id="gNoSpace"> Без пробелов</label>
+    </div>
+    <div class="row">
+      <div class="field" style="max-width:300px"><label>Формат кода</label>
+        <select id="gFormat" style="width:100%; background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:8px; color:inherit; padding:8px">
+          <option value="amp">&#38;#RRGGBB — CMI, EssentialsX</option>
+          <option value="legacy">&#38;x&#38;R&#38;G&#38;B&#38;B — старые версии</option>
+          <option value="minimsg">&lt;#RRGGBB&gt; — MiniMessage</option>
+        </select>
+      </div>
+    </div>
+    <div class="row" id="gPalette" style="align-items:center">
+      <span class="badge">Палитра клана (клик → цвета):</span>
+    </div>
+    <div id="gPreview" style="min-height:54px; padding:10px 12px; background:rgba(0,0,0,.35); border:1px solid var(--line); border-radius:10px; font-family:'Consolas','Courier New',monospace; font-size:22px; margin-top:10px; word-break:break-all"></div>
+    <div class="row" style="align-items:flex-end; margin-top:10px">
+      <textarea id="gCode" readonly rows="3" style="flex:1 1 auto; background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:8px; color:inherit; padding:8px; font:13px/1.5 'Consolas',monospace"></textarea>
+      <button id="gCopy">📋 Скопировать код</button>
+    </div>
+    <div class="hint" style="font-size:12px">Жирный добавляет <code>&l</code> после каждого цветового кода. «Без пробелов» убирает пробелы из итогового кода (для никив в TAB).</div>
   </div>
 
   <div class="card" id="accessCard" style="display:none">
@@ -383,24 +417,30 @@
   function showTab(name){
     var showTable = name === "table";
     var showAccess = name === "access";
+    var showGradient = name === "gradient";
     document.getElementById("editorCard").style.display = showTable ? "" : "none";
     document.getElementById("toolsCard").style.display = showTable ? "" : "none";
     var tc = document.getElementById("tableCard");
     if(tc){ tc.style.display = showTable ? "" : "none"; }
-    document.getElementById("clanCard").style.display = (!showTable && !showAccess) ? "" : "none";
+    document.getElementById("clanCard").style.display = (!showTable && !showAccess && !showGradient) ? "" : "none";
     document.getElementById("accessCard").style.display = showAccess ? "" : "none";
+    var gc = document.getElementById("gradientCard");
+    if(gc){ gc.style.display = showGradient ? "" : "none"; }
     var marks = [
       ["tabTableBtn", showTable],
-      ["tabClanBtn", !showTable && !showAccess]
+      ["tabClanBtn", !showTable && !showAccess && !showGradient],
+      ["tabGradientBtn", showGradient]
     ];
     marks.forEach(function(m){
       var btn = document.getElementById(m[0]);
       btn.style.opacity = m[1] ? "1" : ".55";
       btn.style.outline = m[1] ? "2px solid rgba(0,163,188,.8)" : "none";
     });
+    if(showGradient && typeof gUpdate === "function"){ gUpdate(); }
   }
   document.getElementById("tabTableBtn").addEventListener("click", function(){ showTab("table"); });
   document.getElementById("tabClanBtn").addEventListener("click", function(){ showTab("clan"); });
+  document.getElementById("tabGradientBtn").addEventListener("click", function(){ showTab("gradient"); });
 
   // ---------- страницы клана / роли ----------
   var RANKS = ["Хранитель", "Магистр", "Страж", "Паладин", "Рыцарь", "Лайтовец", "Клоун"];
@@ -427,6 +467,102 @@
     var arr = ROLE_COLORS[String(pos || "").trim().toLowerCase()];
     return arr ? arr[1] : null;
   }
+
+  // ---------- генератор градиентного текста ----------
+  function gHexToRgb(h){
+    var m = /^#?([0-9a-fA-F]{6})$/.exec(String(h || "").trim());
+    if(!m){ return null; }
+    var v = parseInt(m[1], 16);
+    return [(v >>> 16) & 255, (v >>> 8) & 255, v & 255];
+  }
+  function gMix(a, b, t){
+    if(!a){ a = [0, 0, 0]; } if(!b){ b = [255, 255, 255]; }
+    return [
+      Math.round(a[0] + (b[0] - a[0]) * t),
+      Math.round(a[1] + (b[1] - a[1]) * t),
+      Math.round(a[2] + (b[2] - a[2]) * t)
+    ];
+  }
+  function gMcCode(rgb, format){
+    var hex = rgb.map(function(x){ return x.toString(16).padStart(2, "0"); }).join("");
+    if(format === "legacy"){
+      return "&x&" + hex.split("").join("&");
+    }
+    if(format === "minimsg"){
+      return "<#" + hex + ">";
+    }
+    return "&#" + hex; // amp
+  }
+  function gUpdate(){
+    var el = function(id){ return document.getElementById(id); };
+    var text = el("gText").value;
+    var c1 = gHexToRgb(el("gC1").value) || [0, 0, 0];
+    var c2 = gHexToRgb(el("gC2").value) || [255, 255, 255];
+    var bold = el("gBold").checked;
+    var noSpace = el("gNoSpace").checked;
+    var format = el("gFormat").value;
+    // живой просмотр: по-символьный градиент (пробелы не красим)
+    var chars = [];
+    for(var i = 0; i < text.length; i++){
+      var ch = text[i];
+      if(ch === " "){ chars.push(" "); continue; }
+      var t = (text.length === 1) ? 0 : i / (text.length - 1);
+      var c = gMix(c1, c2, t);
+      chars.push('<span style="color:rgb(' + c.join(",") + ')' + (bold ? ";text-shadow:0 0 6px rgba(0,0,0,.55);font-weight:700" : "") + '">' +
+        (ch === "<" ? "&lt;" : ch === "&" ? "&amp;" : ch) + "</span>");
+    }
+    el("gPreview").innerHTML = chars.join("") || '<span style="color:var(--muted)">…текст появится здесь…</span>';
+    // готовый код
+    var nonSpace = text.replace(/ /g, "");
+    var k = nonSpace.length;
+    var out = "";
+    var idx = 0;
+    for(var j = 0; j < text.length; j++){
+      var s = text[j];
+      if(s === " "){ if(!noSpace){ out += " "; } continue; }
+      var tt = (k <= 1) ? 0 : idx / (k - 1);
+      idx++;
+      out += gMcCode(gMix(c1, c2, tt), format) + (bold ? "&l" : "") + s;
+    }
+    el("gCode").value = out;
+  }
+  (function gInit(){
+    var el = function(id){ return document.getElementById(id); };
+    ["gText", "gBold", "gNoSpace"].forEach(function(id){ el(id).addEventListener("input", gUpdate); });
+    ["gC1", "gC2"].forEach(function(id){ el(id).addEventListener("input", gUpdate); });
+    el("gFormat").addEventListener("change", gUpdate);
+    el("gSwap").addEventListener("click", function(){
+      var a = el("gC1").value; el("gC1").value = el("gC2").value; el("gC2").value = a; gUpdate();
+    });
+    // палитра клана: клик подставляет пару цветов роли
+    var palBox = el("gPalette");
+    Object.keys(ROLE_COLORS).forEach(function(key){
+      var nice = key.charAt(0).toUpperCase() + key.slice(1);
+      var b = document.createElement("button");
+      b.className = "ghost sheenPill";
+      b.textContent = nice;
+      b.style.borderColor = ROLE_COLORS[key][1];
+      b.style.color = ROLE_COLORS[key][1];
+      b.title = nice + " (" + ROLE_COLORS[key][0] + " → " + ROLE_COLORS[key][1] + ")";
+      b.addEventListener("click", function(){
+        el("gC1").value = ROLE_COLORS[key][0];
+        el("gC2").value = ROLE_COLORS[key][1];
+        gUpdate();
+      });
+      palBox.appendChild(b);
+    });
+    el("gCopy").addEventListener("click", function(){
+      var ta = el("gCode");
+      ta.focus(); ta.select();
+      var ok = false;
+      try{ ok = document.execCommand("copy"); }catch(e){}
+      if(!ok && navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(ta.value); }
+      var btn = el("gCopy"), old = btn.textContent;
+      btn.textContent = "✅ Скопировано";
+      setTimeout(function(){ btn.textContent = old; }, 1400);
+    });
+    gUpdate();
+  })();
 
   function renderClan(){
     var box = document.getElementById("clanList");
