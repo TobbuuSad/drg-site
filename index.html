@@ -118,8 +118,8 @@
     </div>
   </div>
 
-  <div class="card" id="clanCard">
-    <h3 style="margin:0 0 12px; font-size:16px">🐉 Состав клана</h3>
+  <div class="card" id="clanCard" style="text-align:center">
+    <h3 style="margin:0 0 12px; font-size:16px">🐉 Должности клана</h3>
     <div id="clanList"><span style="opacity:.6">Пока пусто — игроки появятся, когда в таблице будут должности из лестницы.</span></div>
   </div>
 
@@ -365,7 +365,7 @@
       block.style.cssText = "margin-bottom:20px";
       // заголовок роли — плашка с числом
       var head = document.createElement("div");
-      head.style.cssText = "display:flex;align-items:center;gap:10px;margin-bottom:10px";
+      head.style.cssText = "display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:10px";
       head.innerHTML =
         '<span style="background:linear-gradient(90deg, rgba(219,32,219,.25), rgba(219,32,219,.08)); border:1px solid rgba(219,32,219,.5);' +
         'color:#db20db; font-weight:700; padding:4px 12px; border-radius:999px; font-size:14px">' + esc(rank) + '</span>' +
@@ -373,7 +373,7 @@
       block.appendChild(head);
       // сетка карточек в стиле holyworld staffs
       var grid = document.createElement("div");
-      grid.style.cssText = "display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:10px";
+      grid.style.cssText = "display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:10px; justify-content:center";
       members.forEach(function(m){
         grid.appendChild(memberCard(m));
       });
