@@ -60,7 +60,7 @@
     </div>
     <div class="row" style="margin-top:12px">
       <div class="field" style="max-width:260px"><label>Поиск</label><input id="fSearch" placeholder="фильтр по таблице"></div>
-      <button id="btnRefresh" title="Загрузить свежие опубликованные данные с сервера">🔄 Обновить список</button>
+      <button id="btnRefresh" title="Добавить игроков с сервера, которых нет в таблице. Ваши несохранённые правки сохранятся.">🔄 Обновить список</button>
       <span class="badge" id="count"></span>
       <span class="badge" id="syncStatus"></span>
     </div>
@@ -101,7 +101,7 @@
     // 1) черновик из localStorage, 2) свежий fetch players.json (без кэша), 3) запас — window.PLAYERS
     try{
       var raw = localStorage.getItem(KEY);
-      if(raw){ var arr = JSON.parse(raw); if(Array.isArray(arr)) return normalize(arr); }
+      if(raw){ var arr = JSON.parse(raw); if(Array.isArray(arr)){ var draft = normalize(arr); setSyncStatus("Незавершённый черновик: " + draft.length + " игрок(ов). Нажмите 🔄, чтобы дополнить свежими с сервера — черновик не пострадает."); return draft; } }
     }catch(e){}
     setSyncStatus("Загрузка с сервера…");
     fetch("players.json?t=" + Date.now(), {cache:"no-store"}).then(function(r){
@@ -115,6 +115,10 @@
       else setSyncStatus("Ошибка загрузки данных");
     });
     return [];
+  }
+
+  function nickKey(p){
+    return String(p && p.nick || "").trim().toLowerCase();
   }
 
   function now(){ return new Date().toLocaleTimeString(); }
@@ -219,10 +223,17 @@
     }).then(function(data){
       if(data && Array.isArray(data.players)) data = data.players;
       if(!Array.isArray(data)) throw new Error("неверный формат");
-      players = normalize(data);
-      try{ localStorage.removeItem(KEY); }catch(e){}
-      render();
-      setSyncStatus("Обновлено: " + players.length + " игрок(ов), " + now());
+      var server = normalize(data);
+      // текущая таблица (включая незавершённые правки) полностью сохраняется,
+      // с сервера добавляются только игроки, которых ещё нет в таблице
+      var seen = {};
+      players.forEach(function(p){ seen[nickKey(p)] = true; });
+      var added = 0;
+      server.forEach(function(p){
+        if(!seen[nickKey(p)] && nickKey(p)){ players.push(p); seen[nickKey(p)] = true; added++; }
+      });
+      persist();
+      setSyncStatus("Обновлено: с сервера + новый игрок(ов); ваши правки сохранены. Игроков в таблице: " + players.length + ", " + now());
     }).catch(function(e){
       setSyncStatus("Ошибка обновления: " + e.message);
     });
