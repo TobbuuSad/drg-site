@@ -233,6 +233,10 @@
       btn.textContent = "Войти";
       loginF.style.display = ""; passF.style.display = "";
     }
+    // «Таблица состава» видна только вошедшим: гостям — вкладки скрыты, открыт раздел должностей
+    var tabsRow = document.getElementById("tabs");
+    if(tabsRow){ tabsRow.style.display = access ? "flex" : "none"; }
+    if(access){ showTab("table"); } else { showTab("clan"); }
   }
 
   function doLogin(){
@@ -275,9 +279,9 @@
       return r.json();
     }).then(function(data){
       if(data && Array.isArray(data.players)) data = data.players;
-      if(Array.isArray(data)){ players = normalize(data); render(); setSyncStatus("Сервер: " + players.length + " игрок(ов), " + now()); }
+      if(Array.isArray(data)){ players = normalize(data); render(); renderClan(); setSyncStatus("Сервер: " + players.length + " игрок(ов), " + now()); }
     }).catch(function(){
-      if(Array.isArray(window.PLAYERS)){ players = normalize(window.PLAYERS); render(); setSyncStatus("Установлено отключение от сервера — показываю данные players.js"); }
+      if(Array.isArray(window.PLAYERS)){ players = normalize(window.PLAYERS); render(); renderClan(); setSyncStatus("Установлено отключение от сервера — показываю данные players.js"); }
       else setSyncStatus("Ошибка загрузки данных");
     });
     return [];
@@ -341,7 +345,6 @@
   }
   document.getElementById("tabTableBtn").addEventListener("click", function(){ showTab("table"); });
   document.getElementById("tabClanBtn").addEventListener("click", function(){ showTab("clan"); });
-  showTab("table");
 
   // ---------- страницы клана / роли ----------
   var RANKS = ["Хранитель", "Магистр", "Страж", "Паладин", "Рыцарь", "Лайтовец", "Клоун"];
@@ -777,6 +780,7 @@
       if(!Array.isArray(data)) throw new Error("неверный формат");
       players = normalize(data);
       render();
+      renderClan();
       setSyncStatus("Сброс: данные с сервера, " + players.length + " игрок(ов), " + now());
     }).catch(function(e){
       setSyncStatus("Ошибка сброса: " + e.message);
