@@ -80,7 +80,8 @@ window.PLAYERS = [
   {
     "nick": "Siefa",
     "position": "Рыцарь",
-    "discord": "b0dochka"
+    "discord": "b0dochka",
+    "head": ""
   }
 ]
 ;
