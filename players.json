@@ -104,10 +104,22 @@
   {
     "nick": "DrillDreak",
     "position": "Магистр",
-    "discord": "drilldreak"
+    "discord": "drilldreak",
+    "head": ""
   },
   {
     "nick": "Atom1x_",
+    "position": "Рыцарь",
+    "discord": "atom1x.",
+    "head": ""
+  },
+  {
+    "nick": "thebombmaker",
+    "position": "",
+    "discord": ""
+  },
+  {
+    "nick": "mr__xayc",
     "position": "",
     "discord": ""
   }
