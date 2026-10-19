@@ -2,62 +2,74 @@ window.PLAYERS = [
   {
     "nick": "TobbuuSad",
     "position": "Король минета",
-    "discord": "Знать не надо"
+    "discord": "Секрет",
+    "head": ""
   },
   {
     "nick": "Kreyzonchik",
     "position": "Паладин",
-    "discord": "kreyzonchik"
+    "discord": "kreyzonchik",
+    "head": ""
   },
   {
     "nick": "Airri_",
     "position": "Хранитель",
-    "discord": "ia_arinoid"
+    "discord": "ia_arinoid",
+    "head": ""
   },
   {
     "nick": "Ksaves",
     "position": "Рыцарь",
-    "discord": "ksaves."
+    "discord": "ksaves.",
+    "head": ""
   },
   {
     "nick": "__Tachyon_",
     "position": "Паладин",
-    "discord": "_grim_5515"
+    "discord": "_grim_5515",
+    "head": ""
   },
   {
     "nick": "Nergvest",
     "position": "Союзник",
-    "discord": "nergvestin"
+    "discord": "nergvestin",
+    "head": ""
   },
   {
     "nick": "Sxnsee",
     "position": "Лайтовец",
-    "discord": "sxnsee."
+    "discord": "sxnsee.",
+    "head": ""
   },
   {
     "nick": "DgiDgishka",
     "position": "Страж",
-    "discord": "DgiDgishka"
+    "discord": "DgiDgishka",
+    "head": ""
   },
   {
     "nick": "NyaPoka",
     "position": "Магистр",
-    "discord": "nyapokakids"
+    "discord": "nyapokakids",
+    "head": ""
   },
   {
     "nick": "1_InFeRnUs_1",
     "position": "Страж",
-    "discord": ".yarlik"
+    "discord": ".yarlik",
+    "head": ""
   },
   {
     "nick": "QDeriky",
     "position": "Страж",
-    "discord": "qderik"
+    "discord": "qderik",
+    "head": ""
   },
   {
     "nick": "Ren_Tao",
     "position": "Страж",
-    "discord": "rentao"
+    "discord": "rentao",
+    "head": ""
   }
 ]
 ;
