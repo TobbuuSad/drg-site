@@ -16,7 +16,7 @@ window.PLAYERS = [
   },
   {
     "nick": "Ksaves",
-    "position": "123",
+    "position": "Рыцарь",
     "discord": "ksaves."
   },
   {
