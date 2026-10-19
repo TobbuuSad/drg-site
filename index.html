@@ -105,9 +105,6 @@
         </select>
       </div>
     </div>
-    <div class="row" id="gPalette" style="align-items:center">
-      <span class="badge">Палитра клана (клик → цвета):</span>
-    </div>
     <div id="gPreview" style="min-height:54px; padding:10px 12px; background:rgba(0,0,0,.35); border:1px solid var(--line); border-radius:10px; font-family:'Consolas','Courier New',monospace; font-size:22px; margin-top:10px; word-break:break-all"></div>
     <div class="row" style="align-items:flex-end; margin-top:10px">
       <textarea id="gCode" readonly rows="3" style="flex:1 1 auto; background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:8px; color:inherit; padding:8px; font:13px/1.5 'Consolas',monospace"></textarea>
@@ -534,23 +531,7 @@
     el("gSwap").addEventListener("click", function(){
       var a = el("gC1").value; el("gC1").value = el("gC2").value; el("gC2").value = a; gUpdate();
     });
-    // палитра клана: клик подставляет пару цветов роли
-    var palBox = el("gPalette");
-    Object.keys(ROLE_COLORS).forEach(function(key){
-      var nice = key.charAt(0).toUpperCase() + key.slice(1);
-      var b = document.createElement("button");
-      b.className = "ghost sheenPill";
-      b.textContent = nice;
-      b.style.borderColor = ROLE_COLORS[key][1];
-      b.style.color = ROLE_COLORS[key][1];
-      b.title = nice + " (" + ROLE_COLORS[key][0] + " → " + ROLE_COLORS[key][1] + ")";
-      b.addEventListener("click", function(){
-        el("gC1").value = ROLE_COLORS[key][0];
-        el("gC2").value = ROLE_COLORS[key][1];
-        gUpdate();
-      });
-      palBox.appendChild(b);
-    });
+    // палитра клана удалена — выбор цветов только вручную
     el("gCopy").addEventListener("click", function(){
       var ta = el("gCode");
       ta.focus(); ta.select();
