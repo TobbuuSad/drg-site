@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DRG — состав</title>
+<script src="players.js"></script>
+<style>
+  :root{
+    --bg:#101316; --panel:#181d21; --panel2:#1f262b; --line:#2a333a;
+    --text:#e8eef2; --muted:#93a4b0; --teal:#26e5c0; --teal2:#1c9c85;
+    --gold:#f4b942; --red:#e5606d;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 "Segoe UI",Roboto,Arial,sans-serif}
+  .wrap{max-width:900px;margin:0 auto;padding:24px 16px 60px}
+  header h1{margin:0;font-size:28px;letter-spacing:1px}
+  header h1 .drg{color:var(--teal);font-weight:800}
+  header p{margin:6px 0 0;color:var(--muted)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin-top:18px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  .field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:140px}
+  .field label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+  input{background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:9px 10px;font-size:15px;width:100%}
+  input:focus{outline:none;border-color:var(--teal2)}
+  button{background:var(--teal2);border:none;color:#062018;font-weight:700;padding:9px 14px;border-radius:8px;cursor:pointer;font-size:14px}
+  button:hover{filter:brightness(1.12)}
+  button.ghost{background:transparent;color:var(--teal);border:1px solid var(--teal2)}
+  button.danger{background:transparent;color:var(--red);border:1px solid var(--red);padding:5px 10px;font-weight:600}
+  button.edit{background:transparent;color:var(--gold);border:1px solid #8a6d2f;padding:5px 10px;font-weight:600}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th{color:var(--muted);text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--line);padding:8px 10px}
+  td{border-bottom:1px solid var(--line);padding:10px}
+  td.nick{font-weight:700}
+  td .pos{color:var(--gold)}
+  td .disc{color:#8ab4ff}
+  tr:last-child td{border-bottom:none}
+  .actions{white-space:nowrap;text-align:right}
+  .tools{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center}
+  .hint{color:var(--muted);font-size:13px;margin-top:10px;line-height:1.55}
+  .hint code{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:12.5px}
+  .badge{display:inline-block;background:var(--panel2);border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:2px 10px;font-size:12px}
+  .empty{color:var(--muted);padding:16px 10px;text-align:center}
+  a{color:var(--teal)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span class="drg">DRG</span> — состав подразделения</h1>
+    <p>Таблица игроков мода DRG Nametags: ник в игре, должность и дискорд. Надпись над головой берётся отсюда.</p>
+  </header>
+
+  <div class="card">
+    <div class="row">
+      <div class="field"><label>Ник в игре</label><input id="fNick" placeholder="Steve"></div>
+      <div class="field"><label>Должность</label><input id="fPos" placeholder="Офицер"></div>
+      <div class="field"><label>Дискорд</label><input id="fDisc" placeholder="steve_drg"></div>
+      <button id="btnAdd">Добавить</button>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <div class="field" style="max-width:260px"><label>Поиск</label><input id="fSearch" placeholder="фильтр по таблице"></div>
+      <span class="badge" id="count"></span>
+    </div>
+    <table>
+      <thead><tr><th style="width:28%">Ник</th><th style="width:30%">Должность</th><th style="width:28%">Дискорд</th><th class="actions">Действия</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="tools">
+      <button class="ghost" id="btnSaveJson">Сохранить players.json</button>
+      <button class="ghost" id="btnSaveJs">Сохранить players.js</button>
+      <button class="ghost" id="btnSaveBoth">Сохранить оба файла</button>
+      <button id="btnImport" type="button">Импорт players.json</button>
+      <input type="file" id="fileImport" accept=".json,application/json" style="display:none">
+    </div>
+    <div class="hint">
+      <p><b>Как это работает с модом.</b> Мод раз в N минут (задаётся в <code>config/drg-nametags.json</code>,
+      поле <code>refreshSeconds</code>) скачивает файл <code>players.json</code> по адресу из конфига
+      (<code>siteUrl</code>) и помещает содержимое в свою локальную базу. Код мода при этом менять не нужно.</p>
+      <p><b>Как опубликовать изменения.</b> Отредактируйте таблицу выше, затем нажмите «Сохранить оба файла» и
+      положите скачанные <code>players.json</code> и <code>players.js</code> на ваш хостинг (заменяя старые файлы).
+      Варианты хостинга:</p>
+      <p>1) <b>GitHub Pages</b>: положите файлы сайта в репозиторий (Settings → Pages). неприхотливо и всегда онлайн;</p>
+      <p>2) <b>Локально рядом с сервером</b>: в папке сайта выполните <code>python -m http.server 8000</code>;
+      в конфиге мода укажите <code>http://IP-компьютера:8000/players.json</code>;</p>
+      <p>3) любой другой статический хостинг — важно лишь, чтобы по адресу из конфига открывался <code>players.json</code>.</p>
+      <p>Адрес в браузере смотрится по адресу сайта, а мод читает именно <code>players.json</code>.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var KEY = "drg.players";
+  var players = load();
+
+  function load(){
+    // 1) черновик из localStorage, 2) window.PLAYERS из players.js, 3) fetch players.json
+    try{
+      var raw = localStorage.getItem(KEY);
+      if(raw){ var arr = JSON.parse(raw); if(Array.isArray(arr)) return normalize(arr); }
+    }catch(e){}
+    if(Array.isArray(window.PLAYERS)) return normalize(window.PLAYERS);
+    fetch("players.json").then(function(r){ if(r.ok) return r.json(); }).then(function(data){
+      if(Array.isArray(data)){ players = normalize(data); render(); } }).catch(function(){});
+    return [];
+  }
+
+  function normalize(arr){
+    return arr.map(function(p){
+      return {
+        nick: String(p && (p.nick ?? p.name) || ""),
+        position: String(p && (p.position ?? p.role) || ""),
+        discord: String(p && (p.discord ?? p.tag) || "")
+      };
+    }).filter(function(p){ return p.nick.trim() !== ""; });
+  }
+
+  function persist(){
+    try{ localStorage.setItem(KEY, JSON.stringify(players, null, 2)); }catch(e){}
+    render();
+  }
+
+  function download(name, text){
+    var blob = new Blob([text], {type:"application/octet-stream"});
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+  }
+
+  function esc(s){
+    return String(s).replace(/[&<>""]/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+
+  function render(){
+    var q = document.getElementById("fSearch").value.trim().toLowerCase();
+    var tbody = document.getElementById("tbody");
+    tbody.innerHTML = "";
+    var shown = 0;
+    players.forEach(function(p, i){
+      if(q && (p.nick+" "+p.position+" "+p.discord).toLowerCase().indexOf(q) === -1) return;
+      shown++;
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td class="nick">'+esc(p.nick)+'</td>' +
+        '<td><span class="pos">'+esc(p.position)+'</span></td>' +
+        '<td><span class="disc">'+esc(p.discord)+'</span></td>' +
+        '<td class="actions">' +
+          '<button class="edit" data-edit="'+i+'">Изменить</button> ' +
+          '<button class="danger" data-del="'+i+'">Удалить</button>' +
+        '</td>';
+      tbody.appendChild(tr);
+    });
+    if(shown === 0){
+      tbody.innerHTML = '<tr><td colspan="4" class="empty">Пока пусто. Добавьте первого игрока формой выше.</td></tr>';
+    }
+    document.getElementById("count").textContent = "Игроков: " + players.length;
+  }
+
+  document.getElementById("fSearch").addEventListener("input", render);
+
+  document.getElementById("btnAdd").addEventListener("click", function(){
+    var nick = document.getElementById("fNick").value.trim();
+    if(!nick){ alert("Укажите ник игрока"); return; }
+    players.push({
+      nick: nick,
+      position: document.getElementById("fPos").value.trim(),
+      discord: document.getElementById("fDisc").value.trim()
+    });
+    document.getElementById("fNick").value = "";
+    document.getElementById("fPos").value = "";
+    document.getElementById("fDisc").value = "";
+    persist();
+  });
+
+  document.getElementById("tbody").addEventListener("click", function(e){
+    var del = e.target.getAttribute("data-del");
+    if(del !== null){ players.splice(Number(del), 1); persist(); return; }
+    var edit = e.target.getAttribute("data-edit");
+    if(edit !== null){
+      var p = players[Number(edit)];
+      var n = prompt("Ник:", p.nick); if(n === null) return;
+      var pos = prompt("Должность:", p.position); if(pos === null) return;
+      var dsc = prompt("Дискорд:", p.discord); if(dsc === null) return;
+      n = n.trim();
+      if(!n){ alert("Ник не может быть пустым"); return; }
+      players[Number(edit)] = { nick:n, position:pos.trim(), discord:dsc.trim() };
+      persist();
+    }
+  });
+
+  document.getElementById("btnSaveJson").addEventListener("click", function(){
+    download("players.json", JSON.stringify(players, null, 2) + "\n");
+  });
+  document.getElementById("btnSaveJs").addEventListener("click", function(){
+    download("players.js", "window.PLAYERS = " + JSON.stringify(players, null, 2) + ";\n");
+  });
+  document.getElementById("btnSaveBoth").addEventListener("click", function(){
+    download("players.json", JSON.stringify(players, null, 2) + "\n");
+    setTimeout(function(){ download("players.js", "window.PLAYERS = " + JSON.stringify(players, null, 2) + ";\n"); }, 300);
+  });
+
+  document.getElementById("btnImport").addEventListener("click", function(){
+    document.getElementById("fileImport").click();
+  });
+  document.getElementById("fileImport").addEventListener("change", function(ev){
+    var file = ev.target.files && ev.target.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      try{
+        var data = JSON.parse(reader.result);
+        if(data && Array.isArray(data.players)) data = data.players;
+        if(!Array.isArray(data)) throw new Error("не массив");
+        players = normalize(data);
+        persist();
+      }catch(e){ alert("Не удалось прочитать players.json: " + e.message); }
+    };
+    reader.readAsText(file);
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
