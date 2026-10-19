@@ -42,7 +42,7 @@ window.PLAYERS = [
   {
     "nick": "Santell_",
     "position": "главный лох",
-    "discord": "школьник"
+    "discord": "ПОЗОРИЩЕ СЕМЬИ"
   }
 ]
 ;
