@@ -142,12 +142,6 @@ window.PLAYERS = [
     "position": "Лайтовец",
     "discord": "egrytygh",
     "head": ""
-  },
-  {
-    "nick": "Wilfieee",
-    "position": "Клоун",
-    "discord": "Натурал",
-    "head": ""
   }
 ]
 ;
