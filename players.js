@@ -146,7 +146,7 @@ window.PLAYERS = [
   {
     "nick": "Wilfieee",
     "position": "Клоун",
-    "discord": "Клоун",
+    "discord": "Натурал",
     "head": ""
   }
 ]
