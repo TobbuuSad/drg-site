@@ -145,8 +145,9 @@ window.PLAYERS = [
   },
   {
     "nick": "Wilfieee",
-    "position": "",
-    "discord": ""
+    "position": "Клоун",
+    "discord": "Клоун",
+    "head": ""
   }
 ]
 ;
