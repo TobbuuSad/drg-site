@@ -148,6 +148,11 @@ window.PLAYERS = [
     "position": "Страж",
     "discord": "neo_ham",
     "head": ""
+  },
+  {
+    "nick": "opij43534",
+    "position": "",
+    "discord": ""
   }
 ]
 ;
