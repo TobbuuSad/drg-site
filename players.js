@@ -151,8 +151,9 @@ window.PLAYERS = [
   },
   {
     "nick": "opij43534",
-    "position": "",
-    "discord": ""
+    "position": "Обиженка",
+    "discord": "Мамкин сынок",
+    "head": ""
   }
 ]
 ;
